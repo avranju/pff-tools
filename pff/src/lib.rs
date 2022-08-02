@@ -8,8 +8,8 @@ use pff_sys::{
     LIBPFF_ACCESS_FLAGS_LIBPFF_ACCESS_FLAG_WRITE,
 };
 
-mod error;
-mod item;
+pub mod error;
+pub mod item;
 
 #[derive(Debug)]
 pub struct Pff {
@@ -115,7 +115,7 @@ bitflags! {
 mod tests {
     use crate::{FileOpenFlags, Pff};
 
-    const TEST_PST_FILE: &str = "/media/avranju/data11/rajave-backup/Outlook/avranju@gmail.com.ost";
+    const TEST_PST_FILE: &str = "/Users/avranju/Downloads/outlook/rajave@microsoft.com.nst";
 
     #[test]
     fn pff_new() {

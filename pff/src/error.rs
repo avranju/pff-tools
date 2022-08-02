@@ -11,6 +11,12 @@ pub enum Error {
     #[error("{0}")]
     NulError(#[from] std::ffi::NulError),
 
+    #[error("{0}")]
+    FromVecWithNulError(#[from] std::ffi::FromVecWithNulError),
+
+    #[error("{0}")]
+    IntoStringError(#[from] std::ffi::IntoStringError),
+
     #[error("Unrecognized item type {0}")]
     BadItemType(u8),
 }
@@ -31,6 +37,9 @@ impl PffError {
         Self { error }
     }
 }
+
+unsafe impl Send for PffError {}
+unsafe impl Sync for PffError {}
 
 impl Drop for PffError {
     fn drop(&mut self) {
