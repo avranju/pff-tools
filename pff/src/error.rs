@@ -1,0 +1,58 @@
+use std::{ffi::CStr, fmt::Display};
+
+use pff_sys::{libpff_error_free, libpff_error_sprint, libpff_error_t};
+use thiserror::Error as ThisError;
+
+#[derive(Debug, ThisError)]
+pub enum Error {
+    #[error("{0}")]
+    PffError(#[source] PffError),
+
+    #[error("{0}")]
+    NulError(#[from] std::ffi::NulError),
+
+    #[error("Unrecognized item type {0}")]
+    BadItemType(u8),
+}
+
+impl Error {
+    pub fn pff_error(error: *mut libpff_error_t) -> Self {
+        Error::PffError(PffError::new(error))
+    }
+}
+
+#[derive(Debug, ThisError)]
+pub struct PffError {
+    error: *mut libpff_error_t,
+}
+
+impl PffError {
+    pub fn new(error: *mut libpff_error_t) -> Self {
+        Self { error }
+    }
+}
+
+impl Drop for PffError {
+    fn drop(&mut self) {
+        unsafe { libpff_error_free(&mut self.error) };
+    }
+}
+
+impl Display for PffError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut buf = Vec::<i8>::with_capacity(1024);
+        let buf_ptr = buf.as_mut_ptr();
+
+        let res = unsafe { libpff_error_sprint(self.error, buf_ptr, buf.capacity() as u64) };
+        match res {
+            -1 => write!(f, "PFF error"),
+            _ => {
+                let c_str: &CStr = unsafe { CStr::from_ptr(buf_ptr) };
+                match c_str.to_str() {
+                    Ok(s) => write!(f, "{}", s),
+                    Err(_) => write!(f, "PFF error"),
+                }
+            }
+        }
+    }
+}
