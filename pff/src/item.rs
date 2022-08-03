@@ -42,7 +42,44 @@ impl Item for PffItem {
 
 #[derive(Debug, Eq, PartialEq, TryFromPrimitive, IntoPrimitive)]
 #[repr(u32)]
-pub enum LibPffEntryType {
+pub enum ValueType {
+    Unspecified = 0x0000,
+    Null = 0x0001,
+    Integer16BitSigned = 0x0002,
+    Integer32BitSigned = 0x0003,
+    Float32Bit = 0x0004,
+    Double64Bit = 0x0005,
+    Currency = 0x0006,
+    Floatingtime = 0x0007,
+    Error = 0x000a,
+    Boolean = 0x000b,
+    Object = 0x000d,
+    Integer64BitSigned = 0x0014,
+    StringAscii = 0x001e,
+    StringUnicode = 0x001f,
+    Filetime = 0x0040,
+    Guid = 0x0048,
+    ServerIdentifier = 0x00fb,
+    Restriction = 0x00fd,
+    RuleAction = 0x00fe,
+    BinaryData = 0x0102,
+    MultiValueInteger16BitSigned = 0x1002,
+    MultiValueInteger32BitSigned = 0x1003,
+    MultiValueFloat32Bit = 0x1004,
+    MultiValueDouble64Bit = 0x1005,
+    MultiValueCurrency = 0x1006,
+    MultiValueFloatingtime = 0x1007,
+    MultiValueInteger64BitSigned = 0x1014,
+    MultiValueStringAscii = 0x101e,
+    MultiValueStringUnicode = 0x101f,
+    MultiValueFiletime = 0x1040,
+    MultiValueGuid = 0x1048,
+    MultiValueBinaryData = 0x1102,
+}
+
+#[derive(Debug, Eq, PartialEq, TryFromPrimitive, IntoPrimitive)]
+#[repr(u32)]
+pub enum EntryType {
     MessageImportance = 0x0017,
     MessageClass = 0x001a,
     MessagePriority = 0x0026,

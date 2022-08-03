@@ -9,7 +9,7 @@ use pff_sys::{
     libpff_message_get_modification_time,
 };
 
-use crate::{error::Error, item::LibPffEntryType, item_ext::Item, utils::filetime_to_naive_dt};
+use crate::{error::Error, item::EntryType, item_ext::Item, utils::filetime_to_naive_dt};
 
 #[derive(Debug)]
 pub struct Message {
@@ -49,9 +49,9 @@ impl Item for Message {
 macro_rules! prop_string {
     ($method:ident, $entry_type:ident) => {
         pub fn $method(&self) -> Result<Option<String>, Error> {
-            match self.get_entry_string_size(LibPffEntryType::$entry_type)? {
+            match self.get_entry_string_size(EntryType::$entry_type)? {
                 Some(entry_size) if entry_size > 0 => {
-                    self.get_entry_string(LibPffEntryType::$entry_type, entry_size)
+                    self.get_entry_string(EntryType::$entry_type, entry_size)
                 }
                 _ => Ok(None),
             }
@@ -97,7 +97,7 @@ impl Message {
     prop_time!(creation_time);
     prop_time!(modification_time);
 
-    fn get_entry_string_size(&self, entry_type: LibPffEntryType) -> Result<Option<u64>, Error> {
+    fn get_entry_string_size(&self, entry_type: EntryType) -> Result<Option<u64>, Error> {
         let mut error: *mut libpff_error_t = ptr::null_mut();
         let mut entry_size: u64 = 0;
         let res = unsafe {
@@ -118,7 +118,7 @@ impl Message {
 
     fn get_entry_string(
         &self,
-        entry_type: LibPffEntryType,
+        entry_type: EntryType,
         entry_size: u64,
     ) -> Result<Option<String>, Error> {
         let mut error: *mut libpff_error_t = ptr::null_mut();

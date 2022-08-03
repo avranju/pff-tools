@@ -12,7 +12,7 @@ use pff_sys::{
 use crate::{
     error::Error,
     folder::Folder,
-    item::{ItemType, LibPffEntryType},
+    item::{EntryType, ItemType},
     record_set::RecordSet,
 };
 
@@ -99,13 +99,13 @@ pub trait ItemExt: Item + Sized {
     }
 
     fn display_name(&self) -> Result<Option<String>, Error> {
-        match self.get_string_size(LibPffEntryType::DisplayName)? {
+        match self.get_string_size(EntryType::DisplayName)? {
             None => Ok(None),
-            Some(str_size) => self.get_string(LibPffEntryType::DisplayName, str_size),
+            Some(str_size) => self.get_string(EntryType::DisplayName, str_size),
         }
     }
 
-    fn get_string_size(&self, entry_type: LibPffEntryType) -> Result<Option<u64>, Error> {
+    fn get_string_size(&self, entry_type: EntryType) -> Result<Option<u64>, Error> {
         let mut error: *mut libpff_error_t = ptr::null_mut();
         let mut str_size: u64 = 0;
         let res = unsafe {
@@ -126,11 +126,7 @@ pub trait ItemExt: Item + Sized {
         }
     }
 
-    fn get_string(
-        &self,
-        entry_type: LibPffEntryType,
-        str_size: u64,
-    ) -> Result<Option<String>, Error> {
+    fn get_string(&self, entry_type: EntryType, str_size: u64) -> Result<Option<String>, Error> {
         let mut error: *mut libpff_error_t = ptr::null_mut();
         let mut buf = Vec::<u8>::with_capacity(str_size as usize);
         let buf_ptr = buf.as_mut_ptr();

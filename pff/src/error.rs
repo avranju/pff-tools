@@ -20,6 +20,12 @@ pub enum Error {
     #[error("Unrecognized item type {0}")]
     BadItemType(u8),
 
+    #[error("Unrecognized entry type {0}")]
+    BadEntryType(u32),
+
+    #[error("Unrecognized value type {0}")]
+    BadValueType(u32),
+
     #[error("Item is not a folder.")]
     NotAFolder,
 }
