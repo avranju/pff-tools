@@ -43,8 +43,9 @@ fn enum_items<T: Item>(root: T, indent: usize) -> Result<()> {
 
         let entries_count = folder.entries_count()?;
         let msg_count = folder.messages_count()?;
+        let id = folder.id()?;
         println!(
-            "{:>ind$} - {name} - {entries_count} - {msg_count}",
+            "{:>ind$} - [{id}] - {name} - {entries_count} - {msg_count}",
             item_type_str,
             ind = item_type_str.len() + indent,
         );
@@ -65,7 +66,13 @@ fn enum_messages(folder: &Folder, indent: usize) -> Result<()> {
     for message in folder.messages()? {
         let message = message?;
         let subject = message.subject()?.unwrap_or_else(|| "--".to_string());
-        println!("{:>ind$} - {subject}", TYPE, ind = TYPE.len() + indent,);
+        let submit_time = message.client_submit_time()?;
+        let id = message.id()?;
+        println!(
+            "{:>ind$} - [{id}] {submit_time:?} - {subject}",
+            TYPE,
+            ind = TYPE.len() + indent,
+        );
     }
 
     Ok(())

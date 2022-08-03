@@ -1,11 +1,15 @@
 use std::{ffi::CString, ptr};
 
+use chrono::NaiveDateTime;
+use concat_idents::concat_idents;
 use pff_sys::{
-    libpff_error_t, libpff_item_free, libpff_item_t, libpff_message_get_entry_value_utf8_string,
-    libpff_message_get_entry_value_utf8_string_size,
+    libpff_error_t, libpff_item_free, libpff_item_t, libpff_message_get_client_submit_time,
+    libpff_message_get_creation_time, libpff_message_get_delivery_time,
+    libpff_message_get_entry_value_utf8_string, libpff_message_get_entry_value_utf8_string_size,
+    libpff_message_get_modification_time,
 };
 
-use crate::{error::Error, item::LibPffEntryType, item_ext::Item};
+use crate::{error::Error, item::LibPffEntryType, item_ext::Item, utils::filetime_to_naive_dt};
 
 #[derive(Debug)]
 pub struct Message {
@@ -42,31 +46,56 @@ impl Item for Message {
     }
 }
 
-macro_rules! impl_message_method {
+macro_rules! prop_string {
     ($method:ident, $entry_type:ident) => {
         pub fn $method(&self) -> Result<Option<String>, Error> {
             match self.get_entry_string_size(LibPffEntryType::$entry_type)? {
-                None => Ok(None),
-                Some(entry_size) => self.get_entry_string(LibPffEntryType::$entry_type, entry_size),
+                Some(entry_size) if entry_size > 0 => {
+                    self.get_entry_string(LibPffEntryType::$entry_type, entry_size)
+                }
+                _ => Ok(None),
             }
         }
     };
 }
 
+macro_rules! prop_time {
+    ($method:ident) => {
+        concat_idents!(fn_name = libpff_message_get_, $method {
+            pub fn $method(&self) -> Result<Option<NaiveDateTime>, Error> {
+                let mut error: *mut libpff_error_t = ptr::null_mut();
+                let mut time: u64 = 0;
+                let res = unsafe { fn_name(self.item(), &mut time, &mut error) };
+
+                match res {
+                    0 => Ok(None),
+                    1 => Ok(Some(filetime_to_naive_dt(time as i64))),
+                    _ => Err(Error::pff_error(error)),
+                }
+            }
+        });
+    };
+}
+
 impl Message {
-    impl_message_method!(message_class, MessageClass);
-    impl_message_method!(subject, MessageSubject);
-    impl_message_method!(conversation_topic, MessageConversationTopic);
-    impl_message_method!(sender_name, MessageSenderName);
-    impl_message_method!(sender_email_address, MessageSenderEmailAddress);
-    impl_message_method!(sent_representing_name, MessageSentRepresentingName);
-    impl_message_method!(
+    prop_string!(message_class, MessageClass);
+    prop_string!(subject, MessageSubject);
+    prop_string!(conversation_topic, MessageConversationTopic);
+    prop_string!(sender_name, MessageSenderName);
+    prop_string!(sender_email_address, MessageSenderEmailAddress);
+    prop_string!(sent_representing_name, MessageSentRepresentingName);
+    prop_string!(
         sent_representing_email_address,
         MessageSentRepresentingEmailAddress
     );
-    impl_message_method!(received_by_name, MessageReceivedByName);
-    impl_message_method!(received_by_email_address, MessageReceivedByEmailAddress);
-    impl_message_method!(transport_headers, MessageTransportHeaders);
+    prop_string!(received_by_name, MessageReceivedByName);
+    prop_string!(received_by_email_address, MessageReceivedByEmailAddress);
+    prop_string!(transport_headers, MessageTransportHeaders);
+
+    prop_time!(client_submit_time);
+    prop_time!(delivery_time);
+    prop_time!(creation_time);
+    prop_time!(modification_time);
 
     fn get_entry_string_size(&self, entry_type: LibPffEntryType) -> Result<Option<u64>, Error> {
         let mut error: *mut libpff_error_t = ptr::null_mut();

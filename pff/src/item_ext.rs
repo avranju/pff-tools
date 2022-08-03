@@ -4,8 +4,8 @@ use pff_sys::{
     libpff_error_t, libpff_item_get_entry_value_utf8_string,
     libpff_item_get_entry_value_utf8_string_size, libpff_item_get_identifier,
     libpff_item_get_number_of_entries, libpff_item_get_number_of_record_sets,
-    libpff_item_get_number_of_sub_items, libpff_item_get_sub_item, libpff_item_get_type,
-    libpff_item_t,
+    libpff_item_get_number_of_sub_items, libpff_item_get_sub_item,
+    libpff_item_get_sub_item_by_identifier, libpff_item_get_type, libpff_item_t,
 };
 
 use crate::{
@@ -45,6 +45,20 @@ pub trait ItemExt: Item + Sized {
 
     fn sub_items(&self) -> Result<SubItems<'_, Self>, Error> {
         SubItems::new(self)
+    }
+
+    fn sub_item_by_id(&self, id: u32) -> Result<Option<Self>, Error> {
+        let mut error: *mut libpff_error_t = ptr::null_mut();
+        let mut sub_item: *mut libpff_item_t = ptr::null_mut();
+
+        let res = unsafe {
+            libpff_item_get_sub_item_by_identifier(self.item(), id, &mut sub_item, &mut error)
+        };
+        match res {
+            1 => Ok(Some(Self::new(sub_item))),
+            0 => Ok(None),
+            _ => Err(Error::pff_error(error)),
+        }
     }
 
     fn entries_count(&self) -> Result<u32, Error> {

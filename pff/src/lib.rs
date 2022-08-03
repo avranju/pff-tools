@@ -14,6 +14,7 @@ pub mod folder;
 pub mod item;
 pub mod item_ext;
 pub mod message;
+mod utils;
 
 #[derive(Debug)]
 pub struct Pff {
