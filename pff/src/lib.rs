@@ -1,6 +1,7 @@
 use std::{ffi::CString, ptr};
 
 use bitflags::bitflags;
+use item_ext::Item;
 use pff_sys::{
     libpff_error_t, libpff_file_close, libpff_file_free, libpff_file_get_root_folder,
     libpff_file_get_root_item, libpff_file_get_size, libpff_file_initialize, libpff_file_open,
@@ -9,7 +10,9 @@ use pff_sys::{
 };
 
 pub mod error;
+pub mod folder;
 pub mod item;
+pub mod item_ext;
 
 #[derive(Debug)]
 pub struct Pff {
@@ -73,23 +76,23 @@ impl PffOpen {
         }
     }
 
-    pub fn root_item(&self) -> Result<Option<item::Item>, error::Error> {
+    pub fn root_item(&self) -> Result<Option<item::PffItem>, error::Error> {
         let mut error: *mut libpff_error_t = ptr::null_mut();
         let mut item: *mut libpff_item_t = ptr::null_mut();
         let res = unsafe { libpff_file_get_root_item(self.file, &mut item, &mut error) };
         match res {
-            1 => Ok(Some(item::Item::new(item))),
+            1 => Ok(Some(item::PffItem::new(item))),
             0 => Ok(None),
             _ => Err(error::Error::pff_error(error)),
         }
     }
 
-    pub fn root_folder(&self) -> Result<Option<item::Item>, error::Error> {
+    pub fn root_folder(&self) -> Result<Option<item::PffItem>, error::Error> {
         let mut error: *mut libpff_error_t = ptr::null_mut();
         let mut item: *mut libpff_item_t = ptr::null_mut();
         let res = unsafe { libpff_file_get_root_folder(self.file, &mut item, &mut error) };
         match res {
-            1 => Ok(Some(item::Item::new(item))),
+            1 => Ok(Some(item::PffItem::new(item))),
             0 => Ok(None),
             _ => Err(error::Error::pff_error(error)),
         }
@@ -113,9 +116,9 @@ bitflags! {
 
 #[cfg(test)]
 mod tests {
-    use crate::{FileOpenFlags, Pff};
+    use crate::{item_ext::ItemExt, FileOpenFlags, Pff};
 
-    const TEST_PST_FILE: &str = "/Users/avranju/Downloads/outlook/rajave@microsoft.com.nst";
+    const TEST_PST_FILE: &str = "../data/sample.ost";
 
     #[test]
     fn pff_new() {

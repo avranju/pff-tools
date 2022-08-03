@@ -3,7 +3,8 @@ use std::path::PathBuf;
 use anyhow::Result;
 use clap::Parser;
 use pff::{
-    item::{Item, ItemType},
+    item::ItemType,
+    item_ext::{Item, ItemExt},
     FileOpenFlags, Pff,
 };
 
@@ -22,29 +23,32 @@ fn main() -> Result<()> {
         FileOpenFlags::READ,
     )?;
     if let Some(root_folder) = pff.root_folder()? {
-        enum_items(&root_folder, 0)?;
+        enum_items(root_folder, 0)?;
     }
 
     Ok(())
 }
 
-fn enum_items(root: &Item, indent: usize) -> Result<()> {
+fn enum_items<T: Item>(root: T, indent: usize) -> Result<()> {
     let item_type = root.type_()?;
     let item_type_str = format!("{:?}", item_type);
     let name = root
         .display_name()
         .unwrap_or_else(|_| Some("*".to_string()))
         .unwrap_or_else(|| "*".to_string());
+    let entries_count = root.entries_count()?;
+    let recordsets_count = root.record_sets_count()?;
     println!(
-        "{:>ind$} - {name}",
+        "{:>ind$} - {name} - {entries_count} - {recordsets_count}",
         item_type_str,
         ind = item_type_str.len() + indent,
     );
 
     if item_type == ItemType::Folder {
-        for item in root.sub_items()? {
+        let folder = root.into_folder()?;
+        for item in folder.sub_items()? {
             let item = item?;
-            enum_items(&item, indent + 2)?;
+            enum_items(item, indent + 2)?;
         }
     }
 

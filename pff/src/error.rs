@@ -19,6 +19,9 @@ pub enum Error {
 
     #[error("Unrecognized item type {0}")]
     BadItemType(u8),
+
+    #[error("Item is not a folder.")]
+    NotAFolder,
 }
 
 impl Error {
