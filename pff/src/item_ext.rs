@@ -148,6 +148,7 @@ pub trait ItemExt: Item + Sized {
     }
 }
 
+/// Blanket impl of `ItemExt` for all `T`s that implement `Item`.
 impl<T: Item> ItemExt for T {}
 
 pub struct SubItems<'a, T> {

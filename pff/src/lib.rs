@@ -13,6 +13,7 @@ pub mod error;
 pub mod folder;
 pub mod item;
 pub mod item_ext;
+pub mod message;
 
 #[derive(Debug)]
 pub struct Pff {
