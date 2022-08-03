@@ -4,14 +4,16 @@ use pff_sys::{
     libpff_error_t, libpff_item_get_entry_value_utf8_string,
     libpff_item_get_entry_value_utf8_string_size, libpff_item_get_identifier,
     libpff_item_get_number_of_entries, libpff_item_get_number_of_record_sets,
-    libpff_item_get_number_of_sub_items, libpff_item_get_sub_item,
-    libpff_item_get_sub_item_by_identifier, libpff_item_get_type, libpff_item_t,
+    libpff_item_get_number_of_sub_items, libpff_item_get_record_set_by_index,
+    libpff_item_get_sub_item, libpff_item_get_sub_item_by_identifier, libpff_item_get_type,
+    libpff_item_t, libpff_record_set_t,
 };
 
 use crate::{
     error::Error,
     folder::Folder,
     item::{ItemType, LibPffEntryType},
+    record_set::RecordSet,
 };
 
 pub trait Item {
@@ -43,8 +45,8 @@ pub trait ItemExt: Item + Sized {
         }
     }
 
-    fn sub_items(&self) -> Result<SubItems<'_, Self>, Error> {
-        SubItems::new(self)
+    fn sub_items(&self) -> Result<SubItemsIterator<'_, Self>, Error> {
+        SubItemsIterator::new(self)
     }
 
     fn sub_item_by_id(&self, id: u32) -> Result<Option<Self>, Error> {
@@ -165,15 +167,15 @@ pub trait ItemExt: Item + Sized {
 /// Blanket impl of `ItemExt` for all `T`s that implement `Item`.
 impl<T: Item> ItemExt for T {}
 
-pub struct SubItems<'a, T> {
+pub struct SubItemsIterator<'a, T> {
     item: &'a T,
     count: i32,
     index: i32,
 }
 
-impl<'a, T: Item + ItemExt> SubItems<'a, T> {
+impl<'a, T: Item + ItemExt> SubItemsIterator<'a, T> {
     pub fn new(item: &'a T) -> Result<Self, Error> {
-        Ok(SubItems {
+        Ok(SubItemsIterator {
             item,
             count: item.sub_items_count()?,
             index: 0,
@@ -181,7 +183,7 @@ impl<'a, T: Item + ItemExt> SubItems<'a, T> {
     }
 }
 
-impl<'a, T: Item> Iterator for SubItems<'a, T> {
+impl<'a, T: Item> Iterator for SubItemsIterator<'a, T> {
     type Item = Result<T, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -198,6 +200,51 @@ impl<'a, T: Item> Iterator for SubItems<'a, T> {
                 1 => {
                     self.index += 1;
                     Some(Ok(T::new(sub_item)))
+                }
+                _ => Some(Err(Error::pff_error(error))),
+            }
+        }
+    }
+}
+
+pub struct RecordSetIterator<'a, T> {
+    item: &'a T,
+    count: i32,
+    index: i32,
+}
+
+impl<'a, T: Item + ItemExt> RecordSetIterator<'a, T> {
+    pub fn new(item: &'a T) -> Result<Self, Error> {
+        Ok(RecordSetIterator {
+            item,
+            count: item.record_sets_count()?,
+            index: 0,
+        })
+    }
+}
+
+impl<'a, T: Item> Iterator for RecordSetIterator<'a, T> {
+    type Item = Result<RecordSet, Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index >= self.count {
+            None
+        } else {
+            let mut error: *mut libpff_error_t = ptr::null_mut();
+            let mut record_set: *mut libpff_record_set_t = ptr::null_mut();
+            let res = unsafe {
+                libpff_item_get_record_set_by_index(
+                    self.item.item(),
+                    self.index,
+                    &mut record_set,
+                    &mut error,
+                )
+            };
+
+            match res {
+                1 => {
+                    self.index += 1;
+                    Some(Ok(RecordSet::new(record_set)))
                 }
                 _ => Some(Err(Error::pff_error(error))),
             }

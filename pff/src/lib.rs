@@ -14,6 +14,8 @@ pub mod folder;
 pub mod item;
 pub mod item_ext;
 pub mod message;
+pub mod record_entry;
+pub mod record_set;
 mod utils;
 
 #[derive(Debug)]

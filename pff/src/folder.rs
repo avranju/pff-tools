@@ -64,8 +64,8 @@ impl Folder {
         }
     }
 
-    pub fn sub_folders(&self) -> Result<SubFolders<'_>, Error> {
-        SubFolders::new(self)
+    pub fn sub_folders(&self) -> Result<SubFoldersIterator<'_>, Error> {
+        SubFoldersIterator::new(self)
     }
 
     pub fn messages_count(&self) -> Result<i32, Error> {
@@ -81,8 +81,8 @@ impl Folder {
         }
     }
 
-    pub fn messages(&self) -> Result<SubMessages<'_>, Error> {
-        SubMessages::new(self)
+    pub fn messages(&self) -> Result<SubMessagesIterator<'_>, Error> {
+        SubMessagesIterator::new(self)
     }
 
     fn get_name_size(&self) -> Result<Option<u64>, Error> {
@@ -117,15 +117,15 @@ impl Folder {
     }
 }
 
-pub struct SubFolders<'a> {
+pub struct SubFoldersIterator<'a> {
     item: &'a Folder,
     count: i32,
     index: i32,
 }
 
-impl<'a> SubFolders<'a> {
+impl<'a> SubFoldersIterator<'a> {
     pub fn new(item: &'a Folder) -> Result<Self, Error> {
-        Ok(SubFolders {
+        Ok(SubFoldersIterator {
             item,
             count: item.sub_folders_count()?,
             index: 0,
@@ -133,7 +133,7 @@ impl<'a> SubFolders<'a> {
     }
 }
 
-impl<'a> Iterator for SubFolders<'a> {
+impl<'a> Iterator for SubFoldersIterator<'a> {
     type Item = Result<Folder, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -162,15 +162,15 @@ impl<'a> Iterator for SubFolders<'a> {
     }
 }
 
-pub struct SubMessages<'a> {
+pub struct SubMessagesIterator<'a> {
     item: &'a Folder,
     count: i32,
     index: i32,
 }
 
-impl<'a> SubMessages<'a> {
+impl<'a> SubMessagesIterator<'a> {
     pub fn new(item: &'a Folder) -> Result<Self, Error> {
-        Ok(SubMessages {
+        Ok(SubMessagesIterator {
             item,
             count: item.messages_count()?,
             index: 0,
@@ -178,7 +178,7 @@ impl<'a> SubMessages<'a> {
     }
 }
 
-impl<'a> Iterator for SubMessages<'a> {
+impl<'a> Iterator for SubMessagesIterator<'a> {
     type Item = Result<Message, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
