@@ -15,6 +15,7 @@ pub mod folder;
 pub mod item;
 pub mod message;
 pub mod multivalue;
+pub mod recipients;
 pub mod recordset;
 
 #[derive(Debug)]

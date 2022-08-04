@@ -6,13 +6,14 @@ use pff_sys::{
     libpff_error_t, libpff_item_free, libpff_item_t, libpff_message_get_client_submit_time,
     libpff_message_get_creation_time, libpff_message_get_delivery_time,
     libpff_message_get_entry_value_utf8_string, libpff_message_get_entry_value_utf8_string_size,
-    libpff_message_get_modification_time,
+    libpff_message_get_modification_time, libpff_message_get_recipients,
 };
 
 use crate::{
     error::Error,
     filetime::FileTime,
     item::{EntryType, Item},
+    recipients::Recipients,
 };
 
 #[derive(Debug)]
@@ -100,6 +101,20 @@ impl Message {
     prop_time!(delivery_time);
     prop_time!(creation_time);
     prop_time!(modification_time);
+
+    pub fn recipients(&self) -> Result<Option<Recipients>, Error> {
+        let mut error: *mut libpff_error_t = ptr::null_mut();
+        let mut recipients: *mut libpff_item_t = ptr::null_mut();
+
+        let res =
+            unsafe { libpff_message_get_recipients(self.item(), &mut recipients, &mut error) };
+
+        match res {
+            0 => Ok(None),
+            1 => Ok(Some(Recipients::new(recipients))),
+            _ => Err(Error::pff_error(error)),
+        }
+    }
 
     fn get_entry_string_size(&self, entry_type: EntryType) -> Result<Option<u64>, Error> {
         let mut error: *mut libpff_error_t = ptr::null_mut();

@@ -7,7 +7,11 @@ use pff_sys::{
     libpff_item_free, libpff_item_t,
 };
 
-use crate::{error::Error, item::Item, message::Message};
+use crate::{
+    error::Error,
+    item::{Item, ItemExt, PffItem},
+    message::Message,
+};
 
 #[derive(Debug)]
 pub struct Folder {
@@ -50,6 +54,17 @@ impl Folder {
             Some(name_size) if name_size > 0 => self.get_name(name_size),
             _ => Ok(None),
         }
+    }
+
+    pub fn get_item_from_id_path(&self, id_path: &[u32]) -> Result<Option<PffItem>, Error> {
+        let mut cur = self.sub_item_by_id::<PffItem>(id_path[0])?;
+        let mut index = 1;
+        while let (Some(si), Some(_)) = (cur.as_ref(), (index < id_path.len()).then_some(())) {
+            cur = si.sub_item_by_id(id_path[index])?;
+            index += 1;
+        }
+
+        Ok(cur)
     }
 
     pub fn sub_folders_count(&self) -> Result<i32, Error> {

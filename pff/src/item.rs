@@ -45,7 +45,7 @@ pub trait ItemExt: Item + Sized {
         SubItemsIterator::new(self)
     }
 
-    fn sub_item_by_id(&self, id: u32) -> Result<Option<Self>, Error> {
+    fn sub_item_by_id<T: Item>(&self, id: u32) -> Result<Option<T>, Error> {
         let mut error: *mut libpff_error_t = ptr::null_mut();
         let mut sub_item: *mut libpff_item_t = ptr::null_mut();
 
@@ -53,7 +53,7 @@ pub trait ItemExt: Item + Sized {
             libpff_item_get_sub_item_by_identifier(self.item(), id, &mut sub_item, &mut error)
         };
         match res {
-            1 => Ok(Some(Self::new(sub_item))),
+            1 => Ok(Some(T::new(sub_item))),
             0 => Ok(None),
             _ => Err(Error::pff_error(error)),
         }
@@ -80,6 +80,10 @@ pub trait ItemExt: Item + Sized {
             1 => Ok(count),
             _ => Err(Error::pff_error(error)),
         }
+    }
+
+    fn record_sets(&self) -> Result<RecordSetIterator<'_, Self>, Error> {
+        RecordSetIterator::new(self)
     }
 
     fn sub_items_count(&self) -> Result<i32, Error> {

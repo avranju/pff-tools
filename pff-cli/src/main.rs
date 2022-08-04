@@ -23,13 +23,18 @@ fn main() -> Result<()> {
         FileOpenFlags::READ,
     )?;
     if let Some(root_folder) = pff.root_folder()? {
-        enum_items(root_folder, 0)?;
+        // _enum_items(root_folder, 0)?;
+
+        let id_path: [u32; 5] = [8354, 8514, 32834, 32930, 2100836];
+        let folder = root_folder.into_folder()?;
+        let item = folder.get_item_from_id_path(&id_path)?;
+        println!("{:?}", item);
     }
 
     Ok(())
 }
 
-fn enum_items<T: Item>(root: T, indent: usize) -> Result<()> {
+fn _enum_items<T: Item>(root: T, indent: usize) -> Result<()> {
     let item_type = root.type_()?;
     let item_type_str = format!("{:?}", item_type);
     let name = root
@@ -49,26 +54,33 @@ fn enum_items<T: Item>(root: T, indent: usize) -> Result<()> {
             ind = item_type_str.len() + indent,
         );
 
-        enum_messages(&folder, indent + 2)?;
+        _enum_messages(&folder, indent + 2)?;
 
         for item in folder.sub_folders()? {
             let item = item?;
-            enum_items(item, indent + 2)?;
+            _enum_items(item, indent + 2)?;
         }
     }
 
     Ok(())
 }
 
-fn enum_messages(folder: &Folder, indent: usize) -> Result<()> {
+fn _enum_messages(folder: &Folder, indent: usize) -> Result<()> {
     const TYPE: &str = "Message";
     for message in folder.messages()? {
         let message = message?;
         let subject = message.subject()?.unwrap_or_else(|| "--".to_string());
         let submit_time = message.client_submit_time()?;
         let id = message.id()?;
+        let count = if let Some(recipients) = message.recipients()? {
+            let rs = recipients.rs()?;
+            rs.iter()
+                .try_fold(0, |acc, r| r.entries_count().map(|c| acc + c))?
+        } else {
+            0
+        };
         println!(
-            "{:>ind$} - [{id}] {submit_time:?} - {subject}",
+            "{:>ind$} - [{id}] {submit_time:?} {count} - {subject}",
             TYPE,
             ind = TYPE.len() + indent,
         );
