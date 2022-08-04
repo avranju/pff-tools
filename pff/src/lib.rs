@@ -10,6 +10,7 @@ use pff_sys::{
 };
 
 pub mod error;
+mod filetime;
 pub mod folder;
 pub mod item;
 pub mod message;
@@ -17,7 +18,6 @@ pub mod multivalue;
 pub mod multivalue_entry;
 pub mod record_entry;
 pub mod record_set;
-mod utils;
 
 #[derive(Debug)]
 pub struct Pff {

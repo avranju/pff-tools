@@ -1,5 +1,6 @@
 use std::{ffi::CString, ptr};
 
+use chrono::NaiveDateTime;
 use concat_idents::concat_idents;
 use pff_sys::{
     libpff_error_t, libpff_multi_value_get_value, libpff_multi_value_get_value_32bit,
@@ -10,7 +11,7 @@ use pff_sys::{
 };
 use uuid::Uuid;
 
-use crate::{error::Error, item::ValueType, multivalue::MultiValue};
+use crate::{error::Error, filetime::FileTime, item::ValueType, multivalue::MultiValue};
 
 pub struct MultiValueEntry<'a> {
     multi_value: &'a MultiValue,
@@ -177,7 +178,24 @@ impl<'a> MultiValueEntry<'a> {
         }
     }
 
+    pub fn as_filetime(&self) -> Result<NaiveDateTime, Error> {
+        let mut error: *mut libpff_error_t = ptr::null_mut();
+        let mut val: u64 = 0;
+        let res = unsafe {
+            libpff_multi_value_get_value_filetime(
+                self.multi_value.as_ptr(),
+                self.index,
+                &mut val,
+                &mut error,
+            )
+        };
+
+        match res {
+            1 => Ok(FileTime(val as i64).into()),
+            _ => Err(Error::pff_error(error)),
+        }
+    }
+
     data_get!(u32, as_u32, _32bit);
     data_get!(u64, as_u64, _64bit);
-    data_get!(u64, as_filetime, _filetime);
 }

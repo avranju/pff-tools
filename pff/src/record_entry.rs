@@ -1,5 +1,6 @@
 use std::{ffi::CString, ptr};
 
+use chrono::NaiveDateTime;
 use concat_idents::concat_idents;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use pff_sys::{
@@ -18,6 +19,7 @@ use uuid::Uuid;
 
 use crate::{
     error::Error,
+    filetime::FileTime,
     item::{EntryType, ValueType},
     multivalue::MultiValue,
 };
@@ -51,6 +53,23 @@ macro_rules! data_get {
 
                 match res {
                     1 => Ok(val),
+                    _ => Err(Error::pff_error(error)),
+                }
+            }
+        });
+    };
+}
+
+macro_rules! data_get_time {
+    ($fn_name:ident, $pff_type:ident) => {
+        concat_idents!(pff_fn_name = libpff_record_entry_get_data_, $pff_type {
+            pub fn $fn_name(&self) -> Result<NaiveDateTime, Error> {
+                let mut error: *mut libpff_error_t = ptr::null_mut();
+                let mut val: u64 = 0;
+                let res = unsafe { pff_fn_name(self.record_entry, &mut val, &mut error) };
+
+                match res {
+                    1 => Ok(FileTime(val as i64).into()),
                     _ => Err(Error::pff_error(error)),
                 }
             }
@@ -256,8 +275,8 @@ impl RecordEntry {
     data_get!(u16, as_u16, as_16bit_integer);
     data_get!(u32, as_u32, as_32bit_integer);
     data_get!(u64, as_u64, as_64bit_integer);
-    data_get!(u64, as_filetime, as_filetime);
-    data_get!(u64, as_floatingtime, as_floatingtime);
+    data_get_time!(as_filetime, as_filetime);
+    data_get_time!(as_floatingtime, as_floatingtime);
     data_get!(u64, as_size, as_size);
     data_get!(f64, as_f64, as_floating_point);
 }

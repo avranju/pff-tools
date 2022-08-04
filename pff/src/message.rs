@@ -11,8 +11,8 @@ use pff_sys::{
 
 use crate::{
     error::Error,
+    filetime::FileTime,
     item::{EntryType, Item},
-    utils::filetime_to_naive_dt,
 };
 
 #[derive(Debug)]
@@ -73,7 +73,7 @@ macro_rules! prop_time {
 
                 match res {
                     0 => Ok(None),
-                    1 => Ok(Some(filetime_to_naive_dt(time as i64))),
+                    1 => Ok(Some(FileTime(time as i64).into())),
                     _ => Err(Error::pff_error(error)),
                 }
             }
