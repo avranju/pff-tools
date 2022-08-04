@@ -4,8 +4,7 @@ use anyhow::Result;
 use clap::Parser;
 use pff::{
     folder::Folder,
-    item::ItemType,
-    item_ext::{Item, ItemExt},
+    item::{Item, ItemExt, ItemType},
     FileOpenFlags, Pff,
 };
 

@@ -7,7 +7,7 @@ use pff_sys::{
     libpff_item_free, libpff_item_t,
 };
 
-use crate::{error::Error, item_ext::Item, message::Message};
+use crate::{error::Error, item::Item, message::Message};
 
 #[derive(Debug)]
 pub struct Folder {

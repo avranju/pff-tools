@@ -9,7 +9,11 @@ use pff_sys::{
     libpff_message_get_modification_time,
 };
 
-use crate::{error::Error, item::EntryType, item_ext::Item, utils::filetime_to_naive_dt};
+use crate::{
+    error::Error,
+    item::{EntryType, Item},
+    utils::filetime_to_naive_dt,
+};
 
 #[derive(Debug)]
 pub struct Message {

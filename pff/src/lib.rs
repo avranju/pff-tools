@@ -1,7 +1,7 @@
 use std::{ffi::CString, ptr};
 
 use bitflags::bitflags;
-use item_ext::Item;
+use item::Item;
 use pff_sys::{
     libpff_error_t, libpff_file_close, libpff_file_free, libpff_file_get_root_folder,
     libpff_file_get_root_item, libpff_file_get_size, libpff_file_initialize, libpff_file_open,
@@ -12,7 +12,6 @@ use pff_sys::{
 pub mod error;
 pub mod folder;
 pub mod item;
-pub mod item_ext;
 pub mod message;
 pub mod multivalue;
 pub mod multivalue_entry;
@@ -122,7 +121,7 @@ bitflags! {
 
 #[cfg(test)]
 mod tests {
-    use crate::{item_ext::ItemExt, FileOpenFlags, Pff};
+    use crate::{item::ItemExt, FileOpenFlags, Pff};
 
     const TEST_PST_FILE: &str = "../data/sample.ost";
 
