@@ -59,7 +59,7 @@ impl Folder {
     pub fn get_item_from_id_path(&self, id_path: &[u32]) -> Result<Option<PffItem>, Error> {
         let mut cur = self.sub_item_by_id::<PffItem>(id_path[0])?;
         let mut index = 1;
-        while let (Some(si), Some(_)) = (cur.as_ref(), (index < id_path.len()).then_some(())) {
+        while let (Some(si), true) = (cur.as_ref(), (index < id_path.len())) {
             cur = si.sub_item_by_id(id_path[index])?;
             index += 1;
         }

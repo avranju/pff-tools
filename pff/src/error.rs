@@ -14,6 +14,9 @@ pub enum Error {
     #[error("{0}")]
     FromVecWithNulError(#[from] std::ffi::FromVecWithNulError),
 
+    #[error("Couldn't convert UTF16 encoded bytes to String")]
+    FromUtf16Error(#[from] std::string::FromUtf16Error),
+
     #[error("{0}")]
     IntoStringError(#[from] std::ffi::IntoStringError),
 

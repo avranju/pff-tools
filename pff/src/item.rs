@@ -283,6 +283,12 @@ impl Item for PffItem {
     }
 }
 
+impl PffItem {
+    pub fn into<T: Item>(self) -> T {
+        T::new(self.detach())
+    }
+}
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, TryFromPrimitive, IntoPrimitive)]
 #[repr(u32)]
 pub enum ValueType {
@@ -320,7 +326,7 @@ pub enum ValueType {
     MultiValueBinaryData = 0x1102,
 }
 
-#[derive(Debug, Eq, PartialEq, TryFromPrimitive, IntoPrimitive)]
+#[derive(Debug, Ord, PartialOrd, Eq, PartialEq, TryFromPrimitive, IntoPrimitive)]
 #[repr(u32)]
 pub enum EntryType {
     MessageImportance = 0x0017,
@@ -372,6 +378,8 @@ pub enum EntryType {
     DisplayName = 0x3001,
     AddressType = 0x3002,
     EmailAddress = 0x3003,
+    EmailAddress2 = 0x39FE,
+    Alias = 0x39FF,
     MessageCreationTime = 0x3007,
     MessageModificationTime = 0x3008,
     MessageStoreValidFolderMask = 0x35df,

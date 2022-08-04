@@ -2,9 +2,11 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use clap::Parser;
+use itertools::Itertools;
 use pff::{
     folder::Folder,
     item::{Item, ItemExt, ItemType},
+    message::Message,
     FileOpenFlags, Pff,
 };
 
@@ -22,19 +24,30 @@ fn main() -> Result<()> {
         args.file.as_path().to_str().expect("Path must be valid"),
         FileOpenFlags::READ,
     )?;
-    if let Some(root_folder) = pff.root_folder()? {
-        // _enum_items(root_folder, 0)?;
+    // if let Some(root_folder) = pff.root_folder()? {
+    //     let mut id_path = vec![root_folder.id()?];
+    //     _enum_items(root_folder, &mut id_path, 0)?;
+    // }
 
-        let id_path: [u32; 5] = [8354, 8514, 32834, 32930, 2100836];
-        let folder = root_folder.into_folder()?;
-        let item = folder.get_item_from_id_path(&id_path)?;
-        println!("{:?}", item);
+    let id_path = vec![8354, 8514, 32834, 32930, 2105828];
+    // let id_path = vec![8354, 8514, 8578, 2114724];
+    let folder = pff.root_folder()?.unwrap().into_folder()?;
+    if let Some(item) = folder.get_item_from_id_path(&id_path)? {
+        let msg: Message = item.into();
+        println!(
+            "Subject: {}",
+            msg.subject()?.as_ref().map(AsRef::as_ref).unwrap_or("-")
+        );
+        if let Some(recipients) = msg.recipients()? {
+            let rs = recipients.list()?;
+            println!("To: {}", rs.iter().map(|r| r.to_string()).join(", "));
+        }
     }
 
     Ok(())
 }
 
-fn _enum_items<T: Item>(root: T, indent: usize) -> Result<()> {
+fn _enum_items<T: Item>(root: T, id_path: &mut Vec<u32>, indent: usize) -> Result<()> {
     let item_type = root.type_()?;
     let item_type_str = format!("{:?}", item_type);
     let name = root
@@ -47,9 +60,10 @@ fn _enum_items<T: Item>(root: T, indent: usize) -> Result<()> {
 
         let entries_count = folder.entries_count()?;
         let msg_count = folder.messages_count()?;
-        let id = folder.id()?;
+
+        let path_str = id_path.iter().map(|id| id.to_string()).join("/");
         println!(
-            "{:>ind$} - [{id}] - {name} - {entries_count} - {msg_count}",
+            "{:>ind$} - [{path_str}] - {name} - {entries_count} - {msg_count}",
             item_type_str,
             ind = item_type_str.len() + indent,
         );
@@ -58,7 +72,9 @@ fn _enum_items<T: Item>(root: T, indent: usize) -> Result<()> {
 
         for item in folder.sub_folders()? {
             let item = item?;
-            _enum_items(item, indent + 2)?;
+            id_path.push(item.id()?);
+            _enum_items(item, id_path, indent + 2)?;
+            id_path.pop();
         }
     }
 
