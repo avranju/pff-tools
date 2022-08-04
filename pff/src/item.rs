@@ -10,7 +10,7 @@ use pff_sys::{
     libpff_item_t, libpff_record_set_t,
 };
 
-use crate::{error::Error, folder::Folder, record_set::RecordSet};
+use crate::{error::Error, folder::Folder, recordset::RecordSet};
 
 pub trait Item {
     fn new(item: *mut libpff_item_t) -> Self;

@@ -15,12 +15,6 @@ impl FileTime {
     }
 }
 
-impl From<i64> for FileTime {
-    fn from(i: i64) -> Self {
-        FileTime(i)
-    }
-}
-
 impl From<FileTime> for NaiveDateTime {
     fn from(ft: FileTime) -> Self {
         ft.filetime_to_naive_dt()
