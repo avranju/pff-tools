@@ -26,6 +26,9 @@ pub enum Error {
     #[error("Unrecognized value type {0}")]
     BadValueType(u32),
 
+    #[error("Bad UUID")]
+    BadUuid(#[from] uuid::Error),
+
     #[error("Item is not a folder.")]
     NotAFolder,
 }
@@ -48,6 +51,8 @@ impl PffError {
 }
 
 unsafe impl Send for PffError {}
+
+// TODO: Is this safe?
 unsafe impl Sync for PffError {}
 
 impl Drop for PffError {

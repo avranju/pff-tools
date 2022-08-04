@@ -40,7 +40,7 @@ impl Item for PffItem {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, TryFromPrimitive, IntoPrimitive)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, TryFromPrimitive, IntoPrimitive)]
 #[repr(u32)]
 pub enum ValueType {
     Unspecified = 0x0000,

@@ -12,3 +12,4 @@ concat-idents = "1.1.3"
 num_enum = "0.5.7"
 pff-sys = { version = "0.1.0", path = "../pff-sys" }
 thiserror = "1.0.31"
+uuid = "1.1.2"
