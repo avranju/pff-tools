@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, fmt::Display, ptr};
+use std::{fmt::Display, ptr};
 
 use itertools::Itertools;
 use pff_sys::{libpff_item_free, libpff_item_t};
@@ -16,28 +16,13 @@ pub struct Recipient {
     pub address_type: Option<String>,
 }
 
-impl<T> From<T> for Recipient
-where
-    T: Iterator<Item = (EntryType, String)>,
-{
-    fn from(it: T) -> Self {
-        let map = it.collect::<BTreeMap<_, _>>();
-
-        let address_type = map.get(&EntryType::AddressType);
-        let email_address = address_type.and_then(|at| {
-            // For Microsoft Exchange PSTs, the address type is "EX"
-            // and the email address is in EmailAddress2
-            if at.as_str() == "EX" {
-                map.get(&EntryType::EmailAddress2)
-            } else {
-                map.get(&EntryType::EmailAddress)
-            }
-        });
-
-        Recipient {
-            email_address: email_address.map(Clone::clone),
-            display_name: map.get(&EntryType::DisplayName).map(Clone::clone),
-            address_type: address_type.map(Clone::clone),
+impl Display for Recipient {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match (self.display_name.as_ref(), self.email_address.as_ref()) {
+            (Some(dn), Some(ea)) => write!(f, "{dn} <{ea}>"),
+            (Some(dn), None) => write!(f, "{}", dn),
+            (None, Some(ea)) => write!(f, "{}", ea),
+            (None, None) => write!(f, ""),
         }
     }
 }
@@ -95,17 +80,6 @@ impl Recipients {
             .collect::<Vec<Result<_, _>>>()
             .into_iter()
             .collect::<Result<Vec<_>, _>>()
-    }
-}
-
-impl Display for Recipient {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match (self.display_name.as_ref(), self.email_address.as_ref()) {
-            (Some(dn), Some(ea)) => write!(f, "{} <{}>", dn, ea),
-            (Some(dn), None) => write!(f, "{}", dn),
-            (None, Some(ea)) => write!(f, "{}", ea),
-            (None, None) => write!(f, ""),
-        }
     }
 }
 

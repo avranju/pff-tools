@@ -24,6 +24,7 @@ fn main() -> Result<()> {
         args.file.as_path().to_str().expect("Path must be valid"),
         FileOpenFlags::READ,
     )?;
+
     // if let Some(root_folder) = pff.root_folder()? {
     //     let mut id_path = vec![root_folder.id()?];
     //     _enum_items(root_folder, &mut id_path, 0)?;
@@ -38,9 +39,21 @@ fn main() -> Result<()> {
             "Subject: {}",
             msg.subject()?.as_ref().map(AsRef::as_ref).unwrap_or("-")
         );
+
+        println!(
+            "From: {}",
+            msg.sender()?.as_ref().map(AsRef::as_ref).unwrap_or("-")
+        );
+
         if let Some(recipients) = msg.recipients()? {
-            let rs = recipients.list()?;
-            println!("To: {}", rs.iter().map(|r| r.to_string()).join(", "));
+            println!(
+                "To: {}",
+                recipients
+                    .list()?
+                    .iter()
+                    .map(ToString::to_string)
+                    .join(", ")
+            );
         }
     }
 

@@ -102,6 +102,30 @@ impl Message {
     prop_time!(creation_time);
     prop_time!(modification_time);
 
+    pub fn sender(&self) -> Result<Option<String>, Error> {
+        let sender_name = self.sender_name()?;
+        let sender_email = self.sender_email_address()?;
+
+        match (sender_name, sender_email) {
+            (Some(name), Some(email)) => Ok(Some(format!("{name} <{email}>"))),
+            (Some(name), None) => Ok(Some(name)),
+            (None, Some(email)) => Ok(Some(email)),
+            _ => Ok(None),
+        }
+    }
+
+    pub fn received_by(&self) -> Result<Option<String>, Error> {
+        let received_by_name = self.received_by_name()?;
+        let received_by_email_address = self.received_by_email_address()?;
+
+        match (received_by_name, received_by_email_address) {
+            (Some(name), Some(email)) => Ok(Some(format!("{name} <{email}>"))),
+            (Some(name), None) => Ok(Some(name)),
+            (None, Some(email)) => Ok(Some(email)),
+            _ => Ok(None),
+        }
+    }
+
     pub fn recipients(&self) -> Result<Option<Recipients>, Error> {
         let mut error: *mut libpff_error_t = ptr::null_mut();
         let mut recipients: *mut libpff_item_t = ptr::null_mut();
