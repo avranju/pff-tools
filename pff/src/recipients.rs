@@ -62,17 +62,6 @@ impl Item for Recipients {
 }
 
 impl Recipients {
-    pub fn rs_count(&self) -> Result<i32, Error> {
-        self.record_sets_count()
-    }
-
-    pub fn rs(&self) -> Result<Vec<RecordSet>, Error> {
-        self.record_sets()?
-            .collect::<Vec<Result<_, _>>>()
-            .into_iter()
-            .collect()
-    }
-
     pub fn list(&self) -> Result<Vec<Recipient>, Error> {
         self.record_sets()?
             .map_ok(record_set_to_recipient)

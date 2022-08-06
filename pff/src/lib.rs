@@ -9,6 +9,7 @@ use pff_sys::{
     LIBPFF_ACCESS_FLAGS_LIBPFF_ACCESS_FLAG_WRITE,
 };
 
+mod encoding;
 pub mod error;
 mod filetime;
 pub mod folder;

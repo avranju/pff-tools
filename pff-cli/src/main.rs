@@ -55,6 +55,27 @@ fn main() -> Result<()> {
                     .join(", ")
             );
         }
+
+        // if let Some(cp) = msg.first_entry_by_type(EntryType::MessageBodyCodepage)? {
+        //     println!("type = {:?}", cp.value_type()?);
+        //     println!("codepage = {}", cp.as_u32()?);
+        // }
+
+        // {
+        //     for rec in msg.record_sets()? {
+        //         let rec = rec?;
+        //         for ent in rec.entries()? {
+        //             let ent = ent?;
+        //             println!("  {:?} {:?}", ent.type_()?, ent.value_type()?);
+        //         }
+        //         println!("---");
+        //     }
+        // }
+
+        if let Some((body_type, body)) = msg.body()? {
+            println!("body type = {:?}", body_type);
+            println!("body = {}", body);
+        }
     }
 
     Ok(())
@@ -101,15 +122,8 @@ fn _enum_messages(folder: &Folder, indent: usize) -> Result<()> {
         let subject = message.subject()?.unwrap_or_else(|| "--".to_string());
         let submit_time = message.client_submit_time()?;
         let id = message.id()?;
-        let count = if let Some(recipients) = message.recipients()? {
-            let rs = recipients.rs()?;
-            rs.iter()
-                .try_fold(0, |acc, r| r.entries_count().map(|c| acc + c))?
-        } else {
-            0
-        };
         println!(
-            "{:>ind$} - [{id}] {submit_time:?} {count} - {subject}",
+            "{:>ind$} - [{id}] {submit_time:?} - {subject}",
             TYPE,
             ind = TYPE.len() + indent,
         );

@@ -1,6 +1,8 @@
 use std::{ffi::CString, ptr};
 
-use num_enum::{IntoPrimitive, TryFromPrimitive};
+use bitflags::bitflags;
+use itertools::Itertools;
+use num_enum::{FromPrimitive, IntoPrimitive, TryFromPrimitive};
 use pff_sys::{
     libpff_error_t, libpff_item_free, libpff_item_get_entry_value_utf8_string,
     libpff_item_get_entry_value_utf8_string_size, libpff_item_get_identifier,
@@ -10,7 +12,11 @@ use pff_sys::{
     libpff_item_t, libpff_record_set_t,
 };
 
-use crate::{error::Error, folder::Folder, recordset::RecordSet};
+use crate::{
+    error::Error,
+    folder::Folder,
+    recordset::{RecordEntry, RecordSet},
+};
 
 pub trait Item {
     fn new(item: *mut libpff_item_t) -> Self;
@@ -57,6 +63,14 @@ pub trait ItemExt: Item + Sized {
             0 => Ok(None),
             _ => Err(Error::pff_error(error)),
         }
+    }
+
+    fn first_entry_by_type(&self, entry_type: EntryType) -> Result<Option<RecordEntry>, Error> {
+        self.record_sets()?
+            .map_ok(|rs| rs.entry_by_type(entry_type))
+            .flatten_ok()
+            .find(|e| e.as_ref().map(|e| e.is_some()).ok().is_some())
+            .unwrap_or(Ok(None))
     }
 
     fn entries_count(&self) -> Result<u32, Error> {
@@ -141,7 +155,9 @@ pub trait ItemExt: Item + Sized {
                 0,
                 &mut error,
             );
-            buf.set_len(str_size as usize);
+            if res == 1 {
+                buf.set_len(str_size as usize);
+            }
             res
         };
 
@@ -326,7 +342,14 @@ pub enum ValueType {
     MultiValueBinaryData = 0x1102,
 }
 
-#[derive(Debug, Ord, PartialOrd, Eq, PartialEq, TryFromPrimitive, IntoPrimitive)]
+bitflags! {
+    pub struct ValueFlags: u8 {
+        const MATCH_ANY_VALUE_TYPE = 0x01;
+        const IGNORE_NAME_TO_ID_MAP = 0x02;
+    }
+}
+
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, FromPrimitive, IntoPrimitive)]
 #[repr(u32)]
 pub enum EntryType {
     MessageImportance = 0x0017,
@@ -449,6 +472,8 @@ pub enum EntryType {
     MessageIsReminder = 0x8503,
     MessageIsPrivate = 0x8506,
     MessageReminderSignalTime = 0x8550,
+    #[num_enum(default)]
+    Unknown,
 }
 
 #[derive(Debug, Eq, PartialEq, TryFromPrimitive)]

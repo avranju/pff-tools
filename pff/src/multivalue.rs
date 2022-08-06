@@ -181,7 +181,9 @@ impl<'a> MultiValueEntry<'a> {
                 str_size,
                 &mut error,
             );
-            buf.set_len(str_size as usize);
+            if res == 1 {
+                buf.set_len(str_size as usize);
+            }
             res
         };
 
@@ -223,7 +225,9 @@ impl<'a> MultiValueEntry<'a> {
                 data_size,
                 &mut error,
             );
-            buf.set_len(data_size as usize);
+            if res == 1 {
+                buf.set_len(data_size as usize);
+            }
             res
         };
 

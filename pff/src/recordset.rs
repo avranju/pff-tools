@@ -14,15 +14,15 @@ use pff_sys::{
     libpff_record_entry_get_entry_type, libpff_record_entry_get_multi_value,
     libpff_record_entry_get_value_type, libpff_record_entry_read_buffer,
     libpff_record_entry_seek_offset, libpff_record_entry_t, libpff_record_set_free,
-    libpff_record_set_get_entry_by_index, libpff_record_set_get_number_of_entries,
-    libpff_record_set_t,
+    libpff_record_set_get_entry_by_index, libpff_record_set_get_entry_by_type,
+    libpff_record_set_get_number_of_entries, libpff_record_set_t,
 };
 use uuid::Uuid;
 
 use crate::{
     error::Error,
     filetime::FileTime,
-    item::{EntryType, ValueType},
+    item::{EntryType, ValueFlags, ValueType},
     multivalue::MultiValue,
 };
 
@@ -48,6 +48,27 @@ impl Drop for RecordSet {
 impl RecordSet {
     pub fn new(record_set: *mut libpff_record_set_t) -> Self {
         Self { record_set }
+    }
+
+    pub fn entry_by_type(&self, entry_type: EntryType) -> Result<Option<RecordEntry>, Error> {
+        let mut record_entry: *mut libpff_record_entry_t = ptr::null_mut();
+        let mut error: *mut libpff_error_t = ptr::null_mut();
+
+        let res = unsafe {
+            libpff_record_set_get_entry_by_type(
+                self.record_set,
+                entry_type.into(),
+                ValueType::Unspecified.into(),
+                &mut record_entry,
+                ValueFlags::MATCH_ANY_VALUE_TYPE.bits(),
+                &mut error,
+            )
+        };
+        match res {
+            0 => Ok(None),
+            1 => Ok(Some(RecordEntry::new(record_entry))),
+            _ => Err(Error::pff_error(error)),
+        }
     }
 
     pub fn entries(&self) -> Result<RecordEntryIterator<'_>, Error> {
@@ -227,7 +248,9 @@ impl RecordEntry {
         let res = unsafe {
             let res =
                 libpff_record_entry_get_data(self.record_entry, buf_ptr, data_size, &mut error);
-            buf.set_len(data_size as usize);
+            if res == 1 {
+                buf.set_len(data_size as usize);
+            }
             res
         };
 
@@ -318,7 +341,9 @@ impl RecordEntry {
                 str_size,
                 &mut error,
             );
-            buf.set_len(str_size as usize);
+            if res == 1 {
+                buf.set_len(str_size as usize);
+            }
             res
         };
 

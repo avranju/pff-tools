@@ -34,6 +34,9 @@ pub enum Error {
 
     #[error("Item is not a folder.")]
     NotAFolder,
+
+    #[error("Codepage {0} is not supported.")]
+    BadCodePage(u32),
 }
 
 impl Error {

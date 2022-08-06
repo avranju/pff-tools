@@ -120,7 +120,9 @@ impl Folder {
 
         let res = unsafe {
             let res = libpff_folder_get_utf8_name(self.item(), buf_ptr, name_size, &mut error);
-            buf.set_len(name_size as usize);
+            if res == 1 {
+                buf.set_len(name_size as usize);
+            }
             res
         };
 
