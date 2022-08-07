@@ -100,10 +100,6 @@ async fn main() -> Result<()> {
     let pff_file = args.pff_file.clone();
     let progress_file = args.progress_file.clone();
     let tracker = ProgressTracker::from_file(&progress_file)?;
-    let client = Client::new(
-        &args.server,
-        args.api_key.as_ref().map(AsRef::as_ref).unwrap_or(""),
-    );
 
     let tracker2 = tracker.clone();
     let h1 = tokio::task::spawn_blocking(move || {
@@ -111,7 +107,7 @@ async fn main() -> Result<()> {
     });
 
     let tracker3 = tracker.clone();
-    let h2 = tokio::spawn(index_messages(args, client, tracker3, rx));
+    let h2 = tokio::spawn(index_messages(args, tracker3, rx));
 
     let (_, _) = tokio::try_join!(flatten(h1), flatten(h2))?;
     tracker.to_file(&progress_file)?;
@@ -123,10 +119,13 @@ async fn main() -> Result<()> {
 
 async fn index_messages(
     args: Opt,
-    client: Client,
     mut tracker: ProgressTracker,
     mut rx: mpsc::Receiver<(String, Option<Message>)>,
 ) -> Result<()> {
+    let client = Client::new(
+        &args.server,
+        args.api_key.as_ref().map(AsRef::as_ref).unwrap_or(""),
+    );
     let index = client.index(&args.index_name);
 
     // index messages in batches of 100
@@ -152,8 +151,7 @@ async fn index_messages(
 
     // if there are any messages left in the batch, post them
     if !batch.is_empty() {
-        post_to_server(&index, &mut batch, &mut tracker).await?;
-        index_count += batch.len();
+        index_count += post_to_server(&index, &mut batch, &mut tracker).await?;
         print!("Indexed {index_count} messages\r");
     }
 
