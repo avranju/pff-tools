@@ -1,0 +1,18 @@
+[package]
+name = "pff-index"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.60"
+chrono = { version = "0.4.20", features = ["serde"] }
+clap = { version = "3.2.16", features = ["derive"] }
+csv = "1.1.6"
+itertools = "0.10.3"
+meilisearch-sdk = "0.17.0"
+pff = { version = "0.1.0", path = "../pff" }
+serde = { version = "1.0.142", features = ["derive"] }
+serde_json = "1.0.83"
+tokio = { version = "1.20.1", features = ["rt-multi-thread", "macros", "sync"] }

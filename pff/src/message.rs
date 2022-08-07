@@ -1,4 +1,4 @@
-use std::{ffi::CString, ptr};
+use std::{ffi::CString, fmt::Display, ptr};
 
 use chrono::NaiveDateTime;
 use concat_idents::concat_idents;
@@ -131,6 +131,16 @@ pub enum MessageBodyType {
     PlainText,
     Html,
     Rtf,
+}
+
+impl Display for MessageBodyType {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            MessageBodyType::PlainText => write!(f, "plain"),
+            MessageBodyType::Html => write!(f, "html"),
+            MessageBodyType::Rtf => write!(f, "rtf"),
+        }
+    }
 }
 
 impl Message {
