@@ -42,6 +42,10 @@ struct Opt {
     #[clap(long, short = 'f', default_value = "progress.csv")]
     /// File to save progress to so we can resume later
     progress_file: PathBuf,
+
+    #[clap(long, short = 'b', action)]
+    /// Should the message body be included in the index?
+    include_body: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -102,7 +106,9 @@ async fn main() -> Result<()> {
     );
 
     let tracker2 = tracker.clone();
-    let h1 = tokio::task::spawn_blocking(move || message_task(pff_file, tracker2, tx));
+    let h1 = tokio::task::spawn_blocking(move || {
+        message_task(pff_file, args.include_body, tracker2, tx)
+    });
 
     let tracker3 = tracker.clone();
     let h2 = tokio::spawn(index_messages(args, client, tracker3, rx));
@@ -172,6 +178,7 @@ async fn post_to_server(
 
 fn message_task(
     pff_file: PathBuf,
+    include_body: bool,
     tracker: ProgressTracker,
     tx: mpsc::Sender<(String, Option<Message>)>,
 ) -> Result<()> {
@@ -184,7 +191,7 @@ fn message_task(
 
     if let Some(root_folder) = pff.root_folder()? {
         let mut id_path = vec![];
-        enum_items(root_folder, &mut id_path, tracker, &tx)?;
+        enum_items(root_folder, include_body, &mut id_path, tracker, &tx)?;
     }
 
     Ok(())
@@ -192,6 +199,7 @@ fn message_task(
 
 fn enum_items<T>(
     root: T,
+    include_body: bool,
     id_path: &mut Vec<u32>,
     tracker: ProgressTracker,
     tx: &mpsc::Sender<(String, Option<Message>)>,
@@ -202,12 +210,12 @@ where
     if root.type_()? == ItemType::Folder {
         let folder = root.into_folder()?;
 
-        enum_messages(&folder, id_path, tracker.clone(), tx)?;
+        enum_messages(&folder, include_body, id_path, tracker.clone(), tx)?;
 
         for item in folder.sub_folders()? {
             let item = item?;
             id_path.push(item.id()?);
-            enum_items(item, id_path, tracker.clone(), tx)?;
+            enum_items(item, include_body, id_path, tracker.clone(), tx)?;
             id_path.pop();
         }
     }
@@ -217,6 +225,7 @@ where
 
 fn enum_messages(
     folder: &Folder,
+    include_body: bool,
     id_path: &[u32],
     tracker: ProgressTracker,
     tx: &mpsc::Sender<(String, Option<Message>)>,
@@ -231,14 +240,14 @@ fn enum_messages(
 
         // skip messages that are already indexed/faulted
         if !tracker.contains_message(&id) {
-            tx.blocking_send((id.clone(), to_message(id, message).ok()))?;
+            tx.blocking_send((id.clone(), to_message(id, include_body, message).ok()))?;
         }
     }
 
     Ok(())
 }
 
-fn to_message(id: String, message: PffMessage) -> Result<Message> {
+fn to_message(id: String, include_body: bool, message: PffMessage) -> Result<Message> {
     let subject = message.subject()?.unwrap_or_else(|| "--".to_string());
     let sender = Agent::new(message.sender_name()?, message.sender_email_address()?);
     let recipients = message
@@ -246,7 +255,11 @@ fn to_message(id: String, message: PffMessage) -> Result<Message> {
         .and_then(|recs| recs.list().ok())
         .map(|recs| recs.into_iter().map(Agent::from).collect())
         .unwrap_or_default();
-    let body = message.body()?.map(Body::from);
+    let body = if include_body {
+        message.body()?.map(Body::from)
+    } else {
+        None
+    };
     let send_time = message.client_submit_time()?;
     let delivery_time = message.delivery_time()?;
 
