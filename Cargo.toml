@@ -3,5 +3,4 @@ members = [
   "pff",
   "pff-cli",
   "pff-sys",
-  "pff-index",
 ]

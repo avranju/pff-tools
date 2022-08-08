@@ -2,50 +2,28 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use chrono::NaiveDateTime;
-use clap::Parser;
 use itertools::Itertools;
 use meilisearch_sdk::{client::Client, indexes::Index};
 use pff::{
     folder::Folder,
     item::{Item, ItemExt, ItemType},
-    message::{Message as PffMessage, MessageBodyType},
+    message::Message as PffMessage,
+    message::MessageBodyType,
     recipients::Recipient,
     FileOpenFlags, Pff,
 };
-use progress::ProgressTracker;
 use serde::{Deserialize, Serialize};
 use tokio::{sync::mpsc, task::JoinHandle};
 
-use crate::progress::IndexStatus;
+use crate::progress::{IndexStatus, ProgressTracker};
 
-mod progress;
-
-#[derive(Parser, Debug)]
-#[clap(version)]
-struct Opt {
-    #[clap(long, short)]
-    /// Path to PST/OST file
-    pff_file: PathBuf,
-
-    #[clap(long, short)]
-    /// Search server URL in form "ip:port" or "hostname:port"
-    server: String,
-
-    #[clap(long, short)]
-    /// Search server API key (if any)
-    api_key: Option<String>,
-
-    #[clap(long, short)]
-    /// Index name
-    index_name: String,
-
-    #[clap(long, short = 'f', default_value = "progress.csv")]
-    /// File to save progress to so we can resume later
-    progress_file: PathBuf,
-
-    #[clap(long, short = 'b', action)]
-    /// Should the message body be included in the index?
-    include_body: bool,
+pub(crate) struct IndexParams {
+    pub(crate) pff_file: PathBuf,
+    pub(crate) server: String,
+    pub(crate) api_key: Option<String>,
+    pub(crate) index_name: String,
+    pub(crate) progress_file: PathBuf,
+    pub(crate) include_body: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -93,32 +71,8 @@ struct Message {
     delivery_time: Option<NaiveDateTime>,
 }
 
-#[tokio::main]
-async fn main() -> Result<()> {
-    let args = Opt::parse();
-    let (tx, rx) = mpsc::channel(1024);
-    let pff_file = args.pff_file.clone();
-    let progress_file = args.progress_file.clone();
-    let tracker = ProgressTracker::from_file(&progress_file)?;
-
-    let tracker2 = tracker.clone();
-    let h1 = tokio::task::spawn_blocking(move || {
-        message_task(pff_file, args.include_body, tracker2, tx)
-    });
-
-    let tracker3 = tracker.clone();
-    let h2 = tokio::spawn(index_messages(args, tracker3, rx));
-
-    let (_, _) = tokio::try_join!(flatten(h1), flatten(h2))?;
-    tracker.to_file(&progress_file)?;
-
-    println!("\nDone.");
-
-    Ok(())
-}
-
 async fn index_messages(
-    args: Opt,
+    args: IndexParams,
     mut tracker: ProgressTracker,
     mut rx: mpsc::Receiver<(String, Option<Message>)>,
 ) -> Result<()> {
@@ -278,4 +232,26 @@ async fn flatten<T>(handle: JoinHandle<Result<T, anyhow::Error>>) -> Result<T, a
         Ok(Err(err)) => Err(err),
         Err(err) => Err(err.into()),
     }
+}
+
+pub(crate) async fn run(args: IndexParams) -> anyhow::Result<()> {
+    let (tx, rx) = mpsc::channel(1024);
+    let pff_file = args.pff_file.clone();
+    let progress_file = args.progress_file.clone();
+    let tracker = ProgressTracker::from_file(&progress_file)?;
+
+    let tracker2 = tracker.clone();
+    let h1 = tokio::task::spawn_blocking(move || {
+        message_task(pff_file, args.include_body, tracker2, tx)
+    });
+
+    let tracker3 = tracker.clone();
+    let h2 = tokio::spawn(index_messages(args, tracker3, rx));
+
+    let (_, _) = tokio::try_join!(flatten(h1), flatten(h2))?;
+    tracker.to_file(&progress_file)?;
+
+    println!("\nDone.");
+
+    Ok(())
 }
