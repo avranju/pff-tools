@@ -1,4 +1,7 @@
-use std::path::PathBuf;
+use std::{
+    io::{self, Write},
+    path::PathBuf,
+};
 
 use anyhow::Result;
 use chrono::NaiveDateTime;
@@ -27,9 +30,9 @@ pub(crate) struct IndexParams {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Agent {
-    name: Option<String>,
-    email: Option<String>,
+pub(crate) struct Agent {
+    pub(crate) name: Option<String>,
+    pub(crate) email: Option<String>,
 }
 
 impl Agent {
@@ -45,10 +48,10 @@ impl From<Recipient> for Agent {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Body {
+pub(crate) struct Body {
     #[serde(rename = "type")]
-    type_: String,
-    value: String,
+    pub(crate) type_: String,
+    pub(crate) value: String,
 }
 
 impl From<(MessageBodyType, String)> for Body {
@@ -61,14 +64,14 @@ impl From<(MessageBodyType, String)> for Body {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Message {
-    id: String,
-    subject: String,
-    sender: Agent,
-    recipients: Vec<Agent>,
-    body: Option<Body>,
-    send_time: Option<NaiveDateTime>,
-    delivery_time: Option<NaiveDateTime>,
+pub(crate) struct Message {
+    pub(crate) id: String,
+    pub(crate) subject: String,
+    pub(crate) sender: Agent,
+    pub(crate) recipients: Vec<Agent>,
+    pub(crate) body: Option<Body>,
+    pub(crate) send_time: Option<NaiveDateTime>,
+    pub(crate) delivery_time: Option<NaiveDateTime>,
 }
 
 async fn index_messages(
@@ -95,6 +98,7 @@ async fn index_messages(
                 } else {
                     index_count += post_to_server(&index, &mut batch, &mut tracker).await?;
                     print!("Indexed {index_count} messages\r");
+                    io::stdout().flush()?;
                 }
             }
             None => {
@@ -107,6 +111,7 @@ async fn index_messages(
     if !batch.is_empty() {
         index_count += post_to_server(&index, &mut batch, &mut tracker).await?;
         print!("Indexed {index_count} messages\r");
+        io::stdout().flush()?;
     }
 
     Ok(())
@@ -199,7 +204,7 @@ fn enum_messages(
     Ok(())
 }
 
-fn to_message(id: String, include_body: bool, message: PffMessage) -> Result<Message> {
+pub(crate) fn to_message(id: String, include_body: bool, message: PffMessage) -> Result<Message> {
     let subject = message.subject()?.unwrap_or_else(|| "--".to_string());
     let sender = Agent::new(message.sender_name()?, message.sender_email_address()?);
     let recipients = message
@@ -234,7 +239,7 @@ async fn flatten<T>(handle: JoinHandle<Result<T, anyhow::Error>>) -> Result<T, a
     }
 }
 
-pub(crate) async fn run(args: IndexParams) -> anyhow::Result<()> {
+pub(crate) async fn run(args: IndexParams) -> Result<()> {
     let (tx, rx) = mpsc::channel(1024);
     let pff_file = args.pff_file.clone();
     let progress_file = args.progress_file.clone();

@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 
+mod export;
 mod index;
 mod progress;
 
@@ -20,7 +21,19 @@ struct Opts {
 
 #[derive(Subcommand, PartialOrd, Ord, Eq, Debug, PartialEq)]
 pub(crate) enum Command {
-    /// Index all emails
+    /// Export a single message as JSON
+    ExportMessage {
+        #[clap(long, short)]
+        /// The ID of the message to export. The ID must be given as
+        /// as a sequence '_' delimited numbers. For example, 8354_8514_8546_7029316.
+        /// This ID can be fetched from the Meilisearch server search results.
+        /// Note that this message ID path must not include the root folder's ID
+        /// which is what you get by default if you indexed your emails using the
+        /// `pff-cli index` command.
+        id: String,
+    },
+
+    /// Index all emails to a Meilisearch server
     Index {
         #[clap(long, short)]
         /// Search server URL in form "ip:port" or "hostname:port"
@@ -50,6 +63,8 @@ async fn main() -> Result<()> {
     let pff_file = args.pff_file;
 
     match args.command {
+        Command::ExportMessage { id } => export::run(pff_file, id).await,
+
         Command::Index {
             server,
             api_key,
