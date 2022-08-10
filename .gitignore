@@ -1,2 +1,6 @@
 /target
 /Cargo.lock
+.env
+.env.**
+node_modules
+.vscode/
