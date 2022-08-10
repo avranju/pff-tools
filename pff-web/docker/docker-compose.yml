@@ -1,0 +1,15 @@
+version: '3'
+
+networks:
+  pff-web:
+
+services:
+  pff-web:
+    image: avranju/pff-web-web:1.0-armv7l
+    restart: always
+    ports:
+      - "8800:8800"
+    env_file:
+      - pff-web.env
+    networks:
+      - pff-web
