@@ -1,4 +1,4 @@
-use std::{ffi::CStr, fmt::Display};
+use std::{ffi::CStr, fmt::Display, os::raw::c_char};
 
 use pff_sys::{libpff_error_free, libpff_error_sprint, libpff_error_t};
 use thiserror::Error as ThisError;
@@ -69,7 +69,7 @@ impl Drop for PffError {
 
 impl Display for PffError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut buf = Vec::<u8>::with_capacity(1024);
+        let mut buf = Vec::<c_char>::with_capacity(1024);
         let buf_ptr = buf.as_mut_ptr();
 
         let res = unsafe { libpff_error_sprint(self.error, buf_ptr, buf.capacity() as u64) };
