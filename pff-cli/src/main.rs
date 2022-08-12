@@ -36,7 +36,7 @@ pub(crate) enum Command {
     /// Index all emails to a Meilisearch server
     Index {
         #[clap(long, short)]
-        /// Search server URL in form "ip:port" or "hostname:port"
+        /// Search server URL in form "http://ip:port" or "http://hostname:port"
         server: String,
 
         #[clap(long, short)]

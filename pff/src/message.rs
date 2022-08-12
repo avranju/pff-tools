@@ -1,4 +1,4 @@
-use std::{ffi::CString, fmt::Display, ptr};
+use std::{fmt::Display, ptr};
 
 use chrono::NaiveDateTime;
 use concat_idents::concat_idents;
@@ -16,7 +16,7 @@ use crate::{
     encoding,
     error::Error,
     filetime::FileTime,
-    item::{EntryType, Item, ItemExt},
+    item::{EntryType, Item},
     recipients::Recipients,
 };
 
@@ -109,7 +109,11 @@ macro_rules! prop_body {
 
                     match res {
                         0 => Ok(None),
-                        1 => Ok(Some(try_get_body_string(self, buf)?)),
+                        1 => Ok(Some(encoding::try_get_item_string(
+                            self,
+                            EntryType::MessageBodyCodepage,
+                            buf,
+                        )?)),
                         _ => Err(Error::pff_error(error)),
                     }
                 }
@@ -117,13 +121,6 @@ macro_rules! prop_body {
             }
         }
     };
-}
-
-fn try_get_body_string<T: Item>(item: &T, buf: Vec<u8>) -> Result<String, Error> {
-    match item.first_entry_by_type(EntryType::MessageBodyCodepage)? {
-        Some(code_page) => Ok(encoding::to_string(&buf, code_page.as_u32()?)?.to_string()),
-        None => Ok(CString::from_vec_with_nul(buf)?.into_string()?),
-    }
 }
 
 #[derive(Debug)]
@@ -275,7 +272,11 @@ impl Message {
 
         match res {
             0 => Ok(None),
-            1 => Ok(Some(CString::from_vec_with_nul(buf)?.into_string()?)),
+            1 => Ok(Some(encoding::try_get_item_string(
+                self,
+                EntryType::MessageCodepage,
+                buf,
+            )?)),
             _ => Err(Error::pff_error(error)),
         }
     }

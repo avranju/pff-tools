@@ -1,4 +1,4 @@
-use std::{ffi::CString, ptr};
+use std::ptr;
 
 use bitflags::bitflags;
 use itertools::Itertools;
@@ -13,6 +13,7 @@ use pff_sys::{
 };
 
 use crate::{
+    encoding,
     error::Error,
     folder::Folder,
     recordset::{RecordEntry, RecordSet},
@@ -163,7 +164,11 @@ pub trait ItemExt: Item + Sized {
 
         match res {
             0 => Ok(None),
-            1 => Ok(Some(CString::from_vec_with_nul(buf)?.into_string()?)),
+            1 => Ok(Some(encoding::try_get_item_string(
+                self,
+                EntryType::MessageCodepage,
+                buf,
+            )?)),
             _ => Err(Error::pff_error(error)),
         }
     }

@@ -8,3 +8,4 @@ node_modules
 pff-web/docker/build
 pff-web/www/js/bundle.js
 pff-web/www/styles/app.css
+progress.csv
