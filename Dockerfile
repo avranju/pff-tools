@@ -39,6 +39,8 @@ WORKDIR /usr/src/pff-tools
 COPY . .
 WORKDIR /usr/src/pff-tools/pff-web
 RUN cargo install --path .
+WORKDIR /usr/src/pff-tools/pff-cli
+RUN cargo install --path .
 
 # build web app
 FROM node:18 as nodebuild
@@ -60,6 +62,7 @@ WORKDIR /app
 COPY --from=nodebuild /usr/src/pff-tools/pff-web/www /app/www
 COPY --from=rustbuild /usr/local/lib/libpff.so.1 /app/libpff.so.1
 COPY --from=rustbuild /usr/local/cargo/bin/pff-web /app/pff-web
+COPY --from=rustbuild /usr/local/cargo/bin/pff-cli /app/pff-cli
 
 ENV LD_LIBRARY_PATH=/app
 
