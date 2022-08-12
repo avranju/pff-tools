@@ -42,6 +42,7 @@ pub(crate) struct Message {
 pub(crate) struct SearchResult {
     pub(crate) messages: Vec<Message>,
     pub(crate) total_matches: usize,
+    pub(crate) offset: usize,
 }
 
 #[derive(Debug, Clone)]
@@ -58,17 +59,20 @@ impl SearchClient {
         }
     }
 
-    pub async fn search(&self, query: String) -> Result<SearchResult, Error> {
-        let results = self
-            .client
-            .index(&self.index_name)
-            .search()
-            .with_query(&query)
-            .execute::<Message>()
-            .await?;
+    pub async fn search(
+        &self,
+        query_str: String,
+        offset: Option<usize>,
+    ) -> Result<SearchResult, Error> {
+        let index = self.client.index(&self.index_name);
+        let mut query = index.search();
+        query.query = Some(&query_str);
+        query.offset = offset;
+        let results = query.execute::<Message>().await?;
 
         Ok(SearchResult {
             messages: results.hits.into_iter().map(|v| v.result).collect(),
+            offset: results.offset,
             total_matches: results.nb_hits,
         })
     }

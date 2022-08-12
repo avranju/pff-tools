@@ -16,7 +16,6 @@
         "uglify-js": "^3.16.3"
     },
     "dependencies": {
-        "handlebars": "^4.7.7",
-        "lodash": "^4.17.21"
+        "handlebars": "^4.7.7"
     }
 }

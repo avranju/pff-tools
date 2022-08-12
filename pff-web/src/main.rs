@@ -110,7 +110,10 @@ async fn handle_search(
     client: SearchClient,
 ) -> Result<Json<SearchResult>, Error> {
     let query = params.remove("q").unwrap_or_default();
-    let results = client.search(query).await?;
+    let offset = params
+        .remove("offset")
+        .and_then(|offset| offset.parse().ok());
+    let results = client.search(query, offset).await?;
 
     Ok(Json(results))
 }
