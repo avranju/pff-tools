@@ -4,6 +4,13 @@ const template = Handlebars.compile(
   document.getElementById('search-results-template').innerHTML
 );
 
+let searchResults = {
+  messages: [],
+  total_matches: 0
+};
+let offset = 0;
+let scrollToBottom = false;
+
 document.addEventListener('DOMContentLoaded', () => {
   // set focus on the search box
   const searchInput = document.getElementById('search');
@@ -18,18 +25,33 @@ async function search() {
   if (search.trim().length > 0) {
     const params = new URLSearchParams();
     params.append('q', search);
+    params.append('offset', offset);
     const url = `/search?${params.toString()}`;
     const response = await fetch(url);
-    const data = await response.json();
-    const html = template(data);
+    const results = await response.json();
+    searchResults.messages = searchResults.messages.concat(results.messages);
+    const html = template(searchResults);
     document.getElementById('search-results').innerHTML = html;
 
+    // handle load more
     setTimeout(() => {
-      let res = document
-        .querySelector('#search-results')
-        .querySelectorAll('#message');
-      let last = res[res.length - 1];
+      document.querySelector('#load-more').addEventListener('click', onLoadMore);
     }, 1);
+
+    if (scrollToBottom === true) {
+      // TODO: Implement this
+      scrollToBottom = false;
+    }
+  }
+}
+
+function onLoadMore() {
+  if ((offset + searchResults.messages.length) < searchResults.total_matches) {
+    offset += searchResults.messages.length;
+
+    // kick off another search
+    scrollToBottom = true;
+    search();
   }
 }
 
