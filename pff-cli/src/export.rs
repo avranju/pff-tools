@@ -1,12 +1,17 @@
-use std::path::PathBuf;
-use std::str;
+use std::{env, path::PathBuf};
+use std::{fs, str};
 
 use anyhow::Result;
 use pff::{item::ItemExt, message::Message as PffMessage, FileOpenFlags, Pff};
 
 use crate::index::to_message;
 
-pub(crate) async fn run(pff_file: PathBuf, id: String) -> Result<()> {
+pub(crate) async fn run(
+    pff_file: PathBuf,
+    save_attachments: bool,
+    attachment_save_to: Option<PathBuf>,
+    id: String,
+) -> Result<()> {
     // parse the id path to the message
     let id_path = id
         .split('_')
@@ -34,12 +39,34 @@ pub(crate) async fn run(pff_file: PathBuf, id: String) -> Result<()> {
 
     if let Some(item) = item_ref {
         let message: PffMessage = item.into();
+
+        if save_attachments && message.has_attachments()? {
+            save_all_attachments(&message, attachment_save_to)?;
+        }
+
         let message = to_message(message_id.to_string(), true, message)?;
 
         // print JSON representation of the message
         println!("{}", serde_json::to_string(&message)?);
     } else {
         eprintln!("Message was not found in the file.");
+    }
+
+    Ok(())
+}
+
+fn save_all_attachments(message: &PffMessage, save_to: Option<PathBuf>) -> Result<()> {
+    let attachments = message.attachments()?;
+    let save_to = save_to.unwrap_or(env::current_dir()?);
+
+    for (index, attachment) in attachments.enumerate() {
+        let attachment = attachment?;
+        let data = attachment.as_buffer()?;
+        let name = attachment
+            .display_name()?
+            .unwrap_or_else(|| format!("attachment_{}", index + 1));
+        let save_path = save_to.as_path().join(name);
+        fs::write(save_path, &data)?;
     }
 
     Ok(())

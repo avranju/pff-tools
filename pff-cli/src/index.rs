@@ -72,6 +72,7 @@ pub(crate) struct Message {
     pub(crate) body: Option<Body>,
     pub(crate) send_time: Option<NaiveDateTime>,
     pub(crate) delivery_time: Option<NaiveDateTime>,
+    pub(crate) has_attachments: bool,
 }
 
 async fn index_messages(
@@ -219,6 +220,7 @@ pub(crate) fn to_message(id: String, include_body: bool, message: PffMessage) ->
     };
     let send_time = message.client_submit_time()?;
     let delivery_time = message.delivery_time()?;
+    let has_attachments = message.has_attachments()?;
 
     Ok(Message {
         id,
@@ -228,6 +230,7 @@ pub(crate) fn to_message(id: String, include_body: bool, message: PffMessage) ->
         body,
         send_time,
         delivery_time,
+        has_attachments,
     })
 }
 

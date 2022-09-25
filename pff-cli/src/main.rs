@@ -31,6 +31,16 @@ pub(crate) enum Command {
         /// which is what you get by default if you indexed your emails using the
         /// `pff-cli index` command.
         id: String,
+
+        /// Should attachments (if any) be saved to the file system
+        #[clap(long, short)]
+        save_attachments: bool,
+
+        /// If '--save-attachments' is set then a path to a folder where the
+        /// attachments are to be saved can be specified here. If this is not
+        /// specified then the path defaults to the current folder.
+        #[clap(long, short)]
+        attachment_save_to: Option<PathBuf>,
     },
 
     /// Index all emails to a Meilisearch server
@@ -63,7 +73,11 @@ async fn main() -> Result<()> {
     let pff_file = args.pff_file;
 
     match args.command {
-        Command::ExportMessage { id } => export::run(pff_file, id).await,
+        Command::ExportMessage {
+            id,
+            save_attachments,
+            attachment_save_to,
+        } => export::run(pff_file, save_attachments, attachment_save_to, id).await,
 
         Command::Index {
             server,
