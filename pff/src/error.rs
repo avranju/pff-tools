@@ -23,6 +23,9 @@ pub enum Error {
     #[error("Unrecognized item type {0}")]
     BadItemType(u8),
 
+    #[error("Unrecognized attachment type {0}")]
+    BadAttachmentType(i32),
+
     #[error("Unrecognized entry type {0}")]
     BadEntryType(u32),
 

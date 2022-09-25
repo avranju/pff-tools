@@ -3,16 +3,18 @@ use std::{fmt::Display, ptr};
 use chrono::NaiveDateTime;
 use concat_idents::concat_idents;
 use pff_sys::{
-    libpff_error_t, libpff_item_free, libpff_item_t, libpff_message_get_client_submit_time,
-    libpff_message_get_creation_time, libpff_message_get_delivery_time,
-    libpff_message_get_entry_value_utf8_string, libpff_message_get_entry_value_utf8_string_size,
-    libpff_message_get_html_body, libpff_message_get_html_body_size,
-    libpff_message_get_modification_time, libpff_message_get_plain_text_body,
+    libpff_error_t, libpff_item_free, libpff_item_t, libpff_message_get_attachment,
+    libpff_message_get_client_submit_time, libpff_message_get_creation_time,
+    libpff_message_get_delivery_time, libpff_message_get_entry_value_utf8_string,
+    libpff_message_get_entry_value_utf8_string_size, libpff_message_get_html_body,
+    libpff_message_get_html_body_size, libpff_message_get_modification_time,
+    libpff_message_get_number_of_attachments, libpff_message_get_plain_text_body,
     libpff_message_get_plain_text_body_size, libpff_message_get_recipients,
     libpff_message_get_rtf_body, libpff_message_get_rtf_body_size,
 };
 
 use crate::{
+    attachment::Attachment,
     encoding,
     error::Error,
     filetime::FileTime,
@@ -228,6 +230,14 @@ impl Message {
         }
     }
 
+    pub fn has_attachments(&self) -> Result<bool, Error> {
+        Ok(attachments_count(self)? > 0)
+    }
+
+    pub fn attachments(&self) -> Result<AttachmentsIterator<'_>, Error> {
+        AttachmentsIterator::new(self)
+    }
+
     fn get_entry_string_size(&self, entry_type: EntryType) -> Result<Option<u64>, Error> {
         let mut error: *mut libpff_error_t = ptr::null_mut();
         let mut entry_size: u64 = 0;
@@ -279,5 +289,63 @@ impl Message {
             )?)),
             _ => Err(Error::pff_error(error)),
         }
+    }
+}
+
+pub struct AttachmentsIterator<'a> {
+    message: &'a Message,
+    count: i32,
+    index: i32,
+}
+
+impl<'a> AttachmentsIterator<'a> {
+    pub fn new(message: &'a Message) -> Result<Self, Error> {
+        Ok(Self {
+            message,
+            count: attachments_count(message)?,
+            index: 0,
+        })
+    }
+}
+
+impl<'a> Iterator for AttachmentsIterator<'a> {
+    type Item = Result<Attachment, Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index >= self.count {
+            None
+        } else {
+            let mut error: *mut libpff_error_t = ptr::null_mut();
+            let mut attachment: *mut libpff_item_t = ptr::null_mut();
+            let res = unsafe {
+                libpff_message_get_attachment(
+                    self.message.item(),
+                    self.index,
+                    &mut attachment,
+                    &mut error,
+                )
+            };
+
+            match res {
+                1 => {
+                    self.index += 1;
+                    Some(Ok(Attachment::new(attachment)))
+                }
+                _ => Some(Err(Error::pff_error(error))),
+            }
+        }
+    }
+}
+
+fn attachments_count<'a>(message: &'a Message) -> Result<i32, Error> {
+    // get number of attachments
+    let mut count: i32 = 0;
+    let mut error: *mut libpff_error_t = ptr::null_mut();
+
+    let res =
+        unsafe { libpff_message_get_number_of_attachments(message.item(), &mut count, &mut error) };
+    match res {
+        1 => Ok(count),
+        _ => Err(Error::pff_error(error)),
     }
 }
