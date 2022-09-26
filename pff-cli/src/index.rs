@@ -73,6 +73,7 @@ pub(crate) struct Message {
     pub(crate) send_time: Option<NaiveDateTime>,
     pub(crate) delivery_time: Option<NaiveDateTime>,
     pub(crate) has_attachments: bool,
+    pub(crate) attachments: Option<Vec<String>>,
 }
 
 async fn index_messages(
@@ -221,6 +222,22 @@ pub(crate) fn to_message(id: String, include_body: bool, message: PffMessage) ->
     let send_time = message.client_submit_time()?;
     let delivery_time = message.delivery_time()?;
     let has_attachments = message.has_attachments()?;
+    let mut attachments = None;
+    if has_attachments {
+        attachments = message
+            .attachments()?
+            .enumerate()
+            .map(|(index, att)| {
+                att.and_then(|att| {
+                    att.display_name()
+                        .map(|dn| dn.unwrap_or_else(|| format!("attachment_{}", index + 1)))
+                })
+            })
+            .collect_vec()
+            .into_iter()
+            .collect::<Result<Vec<_>, _>>()
+            .ok();
+    }
 
     Ok(Message {
         id,
@@ -231,6 +248,7 @@ pub(crate) fn to_message(id: String, include_body: bool, message: PffMessage) ->
         send_time,
         delivery_time,
         has_attachments,
+        attachments,
     })
 }
 
