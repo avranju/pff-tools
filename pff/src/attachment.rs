@@ -87,15 +87,15 @@ impl Attachment {
         let res = unsafe {
             let res =
                 libpff_attachment_data_read_buffer(self.item(), buf_ptr, data_size, &mut error);
-            if res == 1 {
-                buf.set_len(data_size as usize);
+            if res != -1 {
+                buf.set_len(res as usize);
             }
             res
         };
 
         match res {
-            1 => Ok(buf),
-            _ => Err(Error::pff_error(error)),
+            -1 => Err(Error::pff_error(error)),
+            _ => Ok(buf),
         }
     }
 }

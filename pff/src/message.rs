@@ -337,7 +337,7 @@ impl<'a> Iterator for AttachmentsIterator<'a> {
     }
 }
 
-fn attachments_count<'a>(message: &'a Message) -> Result<i32, Error> {
+fn attachments_count(message: &Message) -> Result<i32, Error> {
     // get number of attachments
     let mut count: i32 = 0;
     let mut error: *mut libpff_error_t = ptr::null_mut();
