@@ -6,6 +6,7 @@ use clap::{Parser, Subcommand};
 mod export;
 mod index;
 mod progress;
+mod search;
 
 #[derive(Parser, Debug)]
 #[clap(version)]
@@ -65,6 +66,37 @@ pub(crate) enum Command {
         /// Should the message body be included in the index?
         include_body: bool,
     },
+
+    /// Search for messages and print result as JSON
+    Search {
+        #[clap(long, short)]
+        /// Search server URL in form "http://ip:port" or "http://hostname:port"
+        server: String,
+
+        #[clap(long, short)]
+        /// Search server API key (if any)
+        api_key: Option<String>,
+
+        #[clap(long, short)]
+        /// Index name
+        index_name: String,
+
+        #[clap(long, short)]
+        /// Query string
+        query: String,
+
+        #[clap(long, short)]
+        /// Number of documents to skip (defaults to zero)
+        offset: Option<usize>,
+
+        #[clap(long, short)]
+        /// Fetch all records automatically paging for results
+        fetch_all: bool,
+
+        #[clap(long, short('t'))]
+        /// Fetch only emails that have attachments
+        has_attachments: bool,
+    },
 }
 
 #[tokio::main]
@@ -95,6 +127,28 @@ async fn main() -> Result<()> {
                 include_body,
             };
             index::run(params).await
+        }
+
+        Command::Search {
+            server,
+            api_key,
+            index_name,
+            query,
+            offset,
+            fetch_all,
+            has_attachments,
+        } => {
+            let params = search::SearchParams {
+                server,
+                api_key,
+                index_name,
+                query,
+                offset,
+                fetch_all,
+                has_attachments,
+            };
+
+            search::run(params).await
         }
     }
 }

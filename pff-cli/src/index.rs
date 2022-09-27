@@ -224,19 +224,20 @@ pub(crate) fn to_message(id: String, include_body: bool, message: PffMessage) ->
     let has_attachments = message.has_attachments()?;
     let mut attachments = None;
     if has_attachments {
-        attachments = message
-            .attachments()?
-            .enumerate()
-            .map(|(index, att)| {
-                att.and_then(|att| {
-                    att.display_name()
-                        .map(|dn| dn.unwrap_or_else(|| format!("attachment_{}", index + 1)))
+        attachments = Some(
+            message
+                .attachments()?
+                .enumerate()
+                .map(|(index, att)| {
+                    att.and_then(|att| {
+                        att.display_name()
+                            .map(|dn| dn.unwrap_or_else(|| format!("attachment_{}", index + 1)))
+                    })
                 })
-            })
-            .collect_vec()
-            .into_iter()
-            .collect::<Result<Vec<_>, _>>()
-            .ok();
+                .collect_vec()
+                .into_iter()
+                .collect::<Result<Vec<_>, _>>()?,
+        );
     }
 
     Ok(Message {
