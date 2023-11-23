@@ -11,7 +11,8 @@ impl FileTime {
     }
 
     fn filetime_to_naive_dt(&self) -> NaiveDateTime {
-        NaiveDateTime::from_timestamp(self.file_time_to_unix_seconds(), 0)
+        NaiveDateTime::from_timestamp_opt(self.file_time_to_unix_seconds(), 0)
+            .expect("from_timestamp_opt cannot fail since nanosecond is set to zero")
     }
 }
 

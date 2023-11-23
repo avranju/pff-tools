@@ -133,7 +133,7 @@ for learning how to build it. It's fairly straightforward. In my case, on my
 Ubuntu box, the following worked great.
 
 ```shell
-sudo apt install git autoconf automake autopoint libtool pkg-config
+sudo apt install git autoconf automake autopoint libtool pkg-config libclang-dev
 git clone https://github.com/libyal/libpff.git
 cd libpff/
 ./synclibs.sh
