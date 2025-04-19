@@ -1,9 +1,9 @@
-FROM buildpack-deps:jammy as rustbuild
+FROM buildpack-deps:plucky as rustbuild
 
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH=/usr/local/cargo/bin:$PATH \
-    RUST_VERSION=1.63.0
+    RUST_VERSION=1.86.0
 
 RUN set -eux; \
     dpkgArch="$(dpkg --print-architecture)"; \
@@ -43,7 +43,7 @@ WORKDIR /usr/src/pff-tools/pff-cli
 RUN cargo install --path .
 
 # build web app
-FROM node:18 as nodebuild
+FROM node:23-slim as nodebuild
 WORKDIR /usr/src/pff-tools
 COPY . .
 WORKDIR /usr/src/pff-tools/pff-web
@@ -51,7 +51,7 @@ RUN yarn install
 RUN yarn run build
 
 # build final image
-FROM ubuntu:jammy
+FROM ubuntu:plucky
 
 # install dependencies
 RUN apt update && \
