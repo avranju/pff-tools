@@ -1,4 +1,4 @@
-FROM buildpack-deps:oracular as rustbuild
+FROM buildpack-deps:jammy as rustbuild
 
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
@@ -51,7 +51,7 @@ RUN yarn install
 RUN yarn run build
 
 # build final image
-FROM ubuntu:oracular
+FROM ubuntu:jammy
 
 # install dependencies
 RUN apt update && \
