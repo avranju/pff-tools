@@ -75,7 +75,7 @@ impl Display for PffError {
         let mut buf = Vec::<c_char>::with_capacity(1024);
         let buf_ptr = buf.as_mut_ptr();
 
-        let res = unsafe { libpff_error_sprint(self.error, buf_ptr, buf.capacity() as u64) };
+        let res = unsafe { libpff_error_sprint(self.error, buf_ptr, buf.capacity()) };
         match res {
             -1 => write!(f, "PFF error"),
             _ => {

@@ -92,7 +92,7 @@ macro_rules! prop_body {
     ($fn_name:ident, $pff_size_fn_name:ident, $pff_fn_name:ident) => {
         pub fn $fn_name(&self) -> Result<Option<String>, Error> {
             let mut error: *mut libpff_error_t = ptr::null_mut();
-            let mut body_size: u64 = 0;
+            let mut body_size = 0;
             let res = unsafe { $pff_size_fn_name(self.item(), &mut body_size, &mut error) };
 
             match res {
@@ -238,9 +238,9 @@ impl Message {
         AttachmentsIterator::new(self)
     }
 
-    fn get_entry_string_size(&self, entry_type: EntryType) -> Result<Option<u64>, Error> {
+    fn get_entry_string_size(&self, entry_type: EntryType) -> Result<Option<usize>, Error> {
         let mut error: *mut libpff_error_t = ptr::null_mut();
-        let mut entry_size: u64 = 0;
+        let mut entry_size = 0;
         let res = unsafe {
             libpff_message_get_entry_value_utf8_string_size(
                 self.item(),
@@ -260,7 +260,7 @@ impl Message {
     fn get_entry_string(
         &self,
         entry_type: EntryType,
-        entry_size: u64,
+        entry_size: usize,
     ) -> Result<Option<String>, Error> {
         let mut error: *mut libpff_error_t = ptr::null_mut();
         let mut buf = Vec::<u8>::with_capacity(entry_size as usize);

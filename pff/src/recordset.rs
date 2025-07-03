@@ -226,8 +226,8 @@ impl RecordEntry {
         }
     }
 
-    pub fn data_size(&self) -> Result<u64, Error> {
-        let mut data_size: u64 = 0;
+    pub fn data_size(&self) -> Result<usize, Error> {
+        let mut data_size = 0;
         let mut error: *mut libpff_error_t = ptr::null_mut();
 
         let res = unsafe {
@@ -277,19 +277,14 @@ impl RecordEntry {
         offset: i64,
         whence: Seek,
         mut buf: Vec<u8>,
-    ) -> Result<i64, Error> {
+    ) -> Result<isize, Error> {
         let mut error: *mut libpff_error_t = ptr::null_mut();
         let buf_ptr = buf.as_mut_ptr();
 
         self.seek_offset(offset, whence)?;
 
         let res = unsafe {
-            libpff_record_entry_read_buffer(
-                self.record_entry,
-                buf_ptr,
-                buf.len() as u64,
-                &mut error,
-            )
+            libpff_record_entry_read_buffer(self.record_entry, buf_ptr, buf.len(), &mut error)
         };
 
         match res {
@@ -311,9 +306,9 @@ impl RecordEntry {
         }
     }
 
-    fn string_size(&self) -> Result<u64, Error> {
+    fn string_size(&self) -> Result<usize, Error> {
         let mut error: *mut libpff_error_t = ptr::null_mut();
-        let mut str_size: u64 = 0;
+        let mut str_size = 0;
         let res = unsafe {
             libpff_record_entry_get_data_as_utf8_string_size(
                 self.record_entry,
@@ -359,12 +354,7 @@ impl RecordEntry {
         let mut error: *mut libpff_error_t = ptr::null_mut();
 
         let res = unsafe {
-            libpff_record_entry_get_data_as_guid(
-                self.record_entry,
-                buf_ptr,
-                buf.len() as u64,
-                &mut error,
-            )
+            libpff_record_entry_get_data_as_guid(self.record_entry, buf_ptr, buf.len(), &mut error)
         };
         match res {
             1 => Ok(Uuid::from_slice(&buf)?),

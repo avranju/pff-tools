@@ -100,9 +100,9 @@ impl Folder {
         SubMessagesIterator::new(self)
     }
 
-    fn get_name_size(&self) -> Result<Option<u64>, Error> {
+    fn get_name_size(&self) -> Result<Option<usize>, Error> {
         let mut error: *mut libpff_error_t = ptr::null_mut();
-        let mut name_size: u64 = 0;
+        let mut name_size = 0;
         let res =
             unsafe { libpff_folder_get_utf8_name_size(self.item(), &mut name_size, &mut error) };
 
@@ -113,7 +113,7 @@ impl Folder {
         }
     }
 
-    fn get_name(&self, name_size: u64) -> Result<Option<String>, Error> {
+    fn get_name(&self, name_size: usize) -> Result<Option<String>, Error> {
         let mut error: *mut libpff_error_t = ptr::null_mut();
         let mut buf = Vec::<u8>::with_capacity(name_size as usize);
         let buf_ptr = buf.as_mut_ptr();

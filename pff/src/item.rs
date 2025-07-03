@@ -120,9 +120,9 @@ pub trait ItemExt: Item + Sized {
         }
     }
 
-    fn get_string_size(&self, entry_type: EntryType) -> Result<Option<u64>, Error> {
+    fn get_string_size(&self, entry_type: EntryType) -> Result<Option<usize>, Error> {
         let mut error: *mut libpff_error_t = ptr::null_mut();
-        let mut str_size: u64 = 0;
+        let mut str_size = 0;
         let res = unsafe {
             libpff_item_get_entry_value_utf8_string_size(
                 self.item(),
@@ -141,7 +141,7 @@ pub trait ItemExt: Item + Sized {
         }
     }
 
-    fn get_string(&self, entry_type: EntryType, str_size: u64) -> Result<Option<String>, Error> {
+    fn get_string(&self, entry_type: EntryType, str_size: usize) -> Result<Option<String>, Error> {
         let mut error: *mut libpff_error_t = ptr::null_mut();
         let mut buf = Vec::<u8>::with_capacity(str_size as usize);
         let buf_ptr = buf.as_mut_ptr();

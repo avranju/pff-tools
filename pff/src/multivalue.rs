@@ -92,7 +92,7 @@ pub struct MultiValueEntry<'a> {
     multi_value: &'a MultiValue,
     index: i32,
     value_type: ValueType,
-    value_size: u64,
+    value_size: usize,
 }
 
 macro_rules! data_get {
@@ -116,7 +116,7 @@ impl<'a> MultiValueEntry<'a> {
     pub fn new(multi_value: &'a MultiValue, index: i32) -> Result<Self, Error> {
         let mut value_type: u32 = 0;
         let mut value_data: *mut u8 = ptr::null_mut();
-        let mut value_size: u64 = 0;
+        let mut value_size = 0;
         let mut error: *mut libpff_error_t = ptr::null_mut();
 
         let res = unsafe {
@@ -145,13 +145,13 @@ impl<'a> MultiValueEntry<'a> {
         self.value_type
     }
 
-    pub fn value_size(&self) -> u64 {
+    pub fn value_size(&self) -> usize {
         self.value_size
     }
 
-    fn string_size(&self) -> Result<u64, Error> {
+    fn string_size(&self) -> Result<usize, Error> {
         let mut error: *mut libpff_error_t = ptr::null_mut();
-        let mut str_size: u64 = 0;
+        let mut str_size = 0;
         let res = unsafe {
             libpff_multi_value_get_value_utf8_string_size(
                 self.multi_value.as_ptr(),
@@ -170,7 +170,7 @@ impl<'a> MultiValueEntry<'a> {
     pub fn as_string(&self) -> Result<String, Error> {
         let mut error: *mut libpff_error_t = ptr::null_mut();
         let str_size = self.string_size()?;
-        let mut buf = Vec::<u8>::with_capacity(str_size as usize);
+        let mut buf = Vec::<u8>::with_capacity(str_size);
         let buf_ptr = buf.as_mut_ptr();
 
         let res = unsafe {
@@ -182,7 +182,7 @@ impl<'a> MultiValueEntry<'a> {
                 &mut error,
             );
             if res == 1 {
-                buf.set_len(str_size as usize);
+                buf.set_len(str_size);
             }
             res
         };
@@ -193,8 +193,8 @@ impl<'a> MultiValueEntry<'a> {
         }
     }
 
-    fn data_size(&self) -> Result<u64, Error> {
-        let mut data_size: u64 = 0;
+    fn data_size(&self) -> Result<usize, Error> {
+        let mut data_size = 0;
         let mut error: *mut libpff_error_t = ptr::null_mut();
 
         let res = unsafe {
@@ -247,7 +247,7 @@ impl<'a> MultiValueEntry<'a> {
                 self.multi_value.as_ptr(),
                 self.index,
                 buf_ptr,
-                buf.len() as u64,
+                buf.len(),
                 &mut error,
             )
         };

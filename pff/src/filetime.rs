@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{DateTime, NaiveDateTime};
 
 const HECTONANOSECS_IN_SEC: i64 = 10_000_000;
 const HECTONANOSEC_TO_UNIX_EPOCH: i64 = 11_644_473_600 * HECTONANOSECS_IN_SEC;
@@ -11,8 +11,9 @@ impl FileTime {
     }
 
     fn filetime_to_naive_dt(&self) -> NaiveDateTime {
-        NaiveDateTime::from_timestamp_opt(self.file_time_to_unix_seconds(), 0)
+        DateTime::from_timestamp(self.file_time_to_unix_seconds(), 0)
             .expect("from_timestamp_opt cannot fail since nanosecond is set to zero")
+            .naive_utc()
     }
 }
 

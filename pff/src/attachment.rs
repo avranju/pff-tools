@@ -85,8 +85,12 @@ impl Attachment {
         let buf_ptr = buf.as_mut_ptr();
 
         let res = unsafe {
-            let res =
-                libpff_attachment_data_read_buffer(self.item(), buf_ptr, data_size, &mut error);
+            let res = libpff_attachment_data_read_buffer(
+                self.item(),
+                buf_ptr,
+                data_size as usize,
+                &mut error,
+            );
             if res != -1 {
                 buf.set_len(res as usize);
             }
