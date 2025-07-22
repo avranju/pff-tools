@@ -14,10 +14,7 @@ pub(crate) struct SearchParams {
 }
 
 pub(crate) async fn run(params: SearchParams) -> Result<()> {
-    let client = Client::new(
-        &params.server,
-        params.api_key.as_ref().map(AsRef::as_ref).unwrap_or(""),
-    );
+    let client = Client::new(&params.server, params.api_key)?;
     let index = client.index(&params.index_name);
     let mut search = index.search();
     let mut offset = params.offset.unwrap_or_default();

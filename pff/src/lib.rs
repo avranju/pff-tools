@@ -44,7 +44,7 @@ impl Pff {
             libpff_file_open(
                 self.file,
                 path_str.as_ptr(),
-                open_flags.bits as i32,
+                open_flags.as_i32(),
                 &mut error,
             )
         };
@@ -116,7 +116,13 @@ bitflags! {
     pub struct FileOpenFlags: u32 {
         const READ = LIBPFF_ACCESS_FLAGS_LIBPFF_ACCESS_FLAG_READ;
         const WRITE = LIBPFF_ACCESS_FLAGS_LIBPFF_ACCESS_FLAG_WRITE;
-        const READ_WRITE = Self::READ.bits | Self::WRITE.bits;
+        const READ_WRITE = Self::READ.bits() | Self::WRITE.bits();
+    }
+}
+
+impl FileOpenFlags {
+    pub fn as_i32(&self) -> i32 {
+        self.bits() as i32
     }
 }
 

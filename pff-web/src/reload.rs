@@ -38,7 +38,7 @@ async fn handle_reload(mut ws: WebSocket, mut rx: broadcast::Receiver<()>) {
     trace!("Connected to WS client");
     while rx.recv().await.is_ok() {
         trace!("Sending reload signal");
-        if ws.send(Message::Text("reload".to_string())).await.is_err() {
+        if ws.send(Message::Text("reload".into())).await.is_err() {
             // client has disconnected
             break;
         }

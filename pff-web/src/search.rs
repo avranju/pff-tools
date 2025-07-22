@@ -51,11 +51,11 @@ pub(crate) struct SearchClient {
 }
 
 impl SearchClient {
-    pub fn new(endpoint: String, api_key: String, index_name: String) -> Self {
-        Self {
-            client: Client::new(endpoint, api_key),
+    pub fn new(endpoint: String, api_key: String, index_name: String) -> Result<Self, Error> {
+        Ok(Self {
+            client: Client::new(endpoint, Some(api_key))?,
             index_name,
-        }
+        })
     }
 
     pub async fn search(&self, query: String) -> Result<SearchResult, Error> {
@@ -69,7 +69,7 @@ impl SearchClient {
 
         Ok(SearchResult {
             messages: results.hits.into_iter().map(|v| v.result).collect(),
-            total_matches: results.nb_hits,
+            total_matches: results.total_hits.unwrap_or_default(),
         })
     }
 }

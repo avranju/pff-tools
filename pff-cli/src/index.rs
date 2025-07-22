@@ -81,10 +81,7 @@ async fn index_messages(
     mut tracker: ProgressTracker,
     mut rx: mpsc::Receiver<(String, Option<Message>)>,
 ) -> Result<()> {
-    let client = Client::new(
-        &args.server,
-        args.api_key.as_ref().map(AsRef::as_ref).unwrap_or(""),
-    );
+    let client = Client::new(&args.server, args.api_key)?;
     let index = client.index(&args.index_name);
 
     // index messages in batches of 100

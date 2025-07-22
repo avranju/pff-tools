@@ -6,14 +6,14 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum = { version = "0.5.13", features = ["json", "query", "ws"] }
+axum = { version = "0.8", features = ["json", "query", "ws", "macros"] }
 chrono = { version = "0.4.20", features = ["serde"] }
 envy = "0.4.2"
 log = "0.4.17"
-meilisearch-sdk = "0.17.0"
+meilisearch-sdk = "0.29"
 pff = { version = "0.1.0", path = "../pff" }
-pretty_env_logger = "0.4.0"
+pretty_env_logger = "0.5"
 serde = { version = "1.0.142", features = ["derive"] }
-thiserror = "1.0.32"
+thiserror = "2.0"
 tokio = { version = "1.20.1", features = ["rt-multi-thread", "macros", "sync"] }
-tower-http = { version = "0.3.4", features = ["fs"] }
+tower-http = { version = "0.6", features = ["fs"] }

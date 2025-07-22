@@ -3,9 +3,6 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("Internal error {0}")]
-    Internal(String),
-
     #[error("Configuration error {0}")]
     Config(#[from] envy::Error),
 

@@ -3,7 +3,7 @@ use std::{collections::HashMap, path::PathBuf, time::Duration};
 use axum::{
     extract::{Query, WebSocketUpgrade},
     http::StatusCode,
-    response::{Html, IntoResponse},
+    response::Html,
     routing::{get, get_service},
     Json, Router,
 };
@@ -12,6 +12,7 @@ use log::{info, trace};
 use reload::reload_req;
 use search::{Body, SearchResult};
 use serde::Deserialize;
+use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 
 use crate::{pff::PffManager, reload::AutoReload, search::SearchClient};
@@ -45,10 +46,10 @@ async fn main() -> Result<(), Error> {
         config.search_endpoint,
         config.search_api_key,
         config.search_index_name,
-    );
+    )?;
 
     let app = Router::new()
-        .fallback(get_service(ServeDir::new("www")).handle_error(handle_error))
+        .fallback(get_service(ServeDir::new("www")))
         .route(
             "/search",
             get({
@@ -87,22 +88,14 @@ async fn main() -> Result<(), Error> {
 
     let addr = config
         .listen_url
-        .unwrap_or_else(|| "0.0.0.0:8800".to_string())
-        .parse()
-        .map_err(|_| Error::Internal("Listen URL parse error".to_string()))?;
+        .unwrap_or_else(|| "0.0.0.0:8800".to_string());
 
     info!("Listening on URL http://{}", addr);
 
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    let listener = TcpListener::bind(addr).await.unwrap();
+    axum::serve(listener, app).await.unwrap();
 
     Ok(())
-}
-
-async fn handle_error(_err: ::std::io::Error) -> impl IntoResponse {
-    (StatusCode::INTERNAL_SERVER_ERROR, "I/O error")
 }
 
 async fn handle_search(
