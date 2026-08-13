@@ -96,6 +96,7 @@ async fn index_messages(
                     batch.push(message);
                 } else {
                     index_count += post_to_server(&index, &mut batch, &mut tracker).await?;
+                    tracker.to_file(&args.progress_file)?;
                     print!("Indexed {index_count} messages\r");
                     io::stdout().flush()?;
                 }
@@ -109,6 +110,7 @@ async fn index_messages(
     // if there are any messages left in the batch, post them
     if !batch.is_empty() {
         index_count += post_to_server(&index, &mut batch, &mut tracker).await?;
+        tracker.to_file(&args.progress_file)?;
         print!("Indexed {index_count} messages\r");
         io::stdout().flush()?;
     }
